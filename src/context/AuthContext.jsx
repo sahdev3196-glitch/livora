@@ -7,7 +7,13 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('livora_token') || null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authTab, setAuthTab] = useState('login'); // 'login' or 'signup'
   const [loading, setLoading] = useState(false);
+
+  const openAuth = (tab = 'login') => {
+    setAuthTab(tab);
+    setIsAuthOpen(true);
+  };
 
   useEffect(() => {
     const savedUser = localStorage.getItem('livora_user');
@@ -162,6 +168,9 @@ export const AuthProvider = ({ children }) => {
         token,
         isAuthOpen,
         setIsAuthOpen,
+        authTab,
+        setAuthTab,
+        openAuth,
         login,
         signup,
         googleLogin,

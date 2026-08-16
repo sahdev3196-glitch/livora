@@ -25,8 +25,14 @@ app.use(express.json());
 // Serve static images directly from server
 app.use('/public', express.static(path.resolve('public')));
 app.use('/pichwai', express.static(path.resolve('public/pichwai')));
+app.use('/Indian Ethnic', express.static(path.resolve('public/Indian Ethnic')));
+app.use('/Indian%20Ethnic', express.static(path.resolve('public/Indian Ethnic')));
 if (fs.existsSync(path.resolve('pichwai'))) {
   app.use('/pichwai', express.static(path.resolve('pichwai')));
+}
+if (fs.existsSync(path.resolve('Indian Ethnic'))) {
+  app.use('/Indian Ethnic', express.static(path.resolve('Indian Ethnic')));
+  app.use('/Indian%20Ethnic', express.static(path.resolve('Indian Ethnic')));
 }
 
 // Dedicated server image route
@@ -159,6 +165,8 @@ function getLocalFolderProducts() {
   const foldersToScan = [
     { folder: 'pichwai', theme: 'Pichwai', room: 'Temple Room' },
     { folder: 'Pichwai', theme: 'Pichwai', room: 'Temple Room' },
+    { folder: 'Indian Ethnic', theme: 'Indian Ethnic', room: 'Living Room' },
+    { folder: 'Indian%20Ethnic', theme: 'Indian Ethnic', room: 'Living Room' },
     { folder: 'tropical', theme: 'Tropical', room: 'Living Room' },
     { folder: 'Tropical', theme: 'Tropical', room: 'Living Room' },
     { folder: 'chinoiserie', theme: 'Chinoiserie', room: 'Dining Area' },

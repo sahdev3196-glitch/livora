@@ -79,9 +79,51 @@ const PICHWAI_FOLDER_WALLPAPERS = Array.from({ length: PICHWAI_PAGES_COUNT }, (_
   };
 });
 
+const INDIAN_ETHNIC_PAGES_COUNT = 19; // Pages 0003 to 0021
+
+const INDIAN_ETHNIC_FOLDER_WALLPAPERS = Array.from({ length: INDIAN_ETHNIC_PAGES_COUNT }, (_, i) => {
+  const pageNum = i + 3; // Indian Ethnic Vol. 2 files start at page-0003
+  const num = String(pageNum).padStart(4, '0');
+  const codeNum = String(i + 1).padStart(2, '0');
+  const fileName = `Indian Ethnic Vol. 2_page-${num}.jpg`;
+  const staticPath = `${import.meta.env.BASE_URL}Indian%20Ethnic/${encodeURIComponent(fileName)}`;
+  
+  const titles = [
+    'Royal Mughal Floral Paisley Heritage',
+    'Jaipur Royal Palace Arch Mural',
+    'Kalamkari Sacred Tree of Life',
+    'Vibrant Royal Indian Peacock Garden',
+    'Traditional Banarasi Zari Brocade Damask',
+    'Marwar Heritage Elephant & Palace Corridor',
+    'Mandala Divine Temple Floral Arch',
+    'Rajasthani Royal Jharokha Art Mural',
+    'Ancient Ajanta Lotus Blossom Symphony',
+    'Jodhpur Indigo Blue Heritage Motif'
+  ];
+  
+  const rooms = ['Living Room', 'Dining Area', 'Bed Room', 'Temple Room'];
+  const titleName = `${titles[i % titles.length]} - Design ${codeNum}`;
+
+  return {
+    id: `indian-ethnic-coll-${i + 1}`,
+    title: titleName,
+    code: `LIV-ETHN-${codeNum}`,
+    startingPrice: 60,
+    theme: 'Indian Ethnic',
+    room: rooms[i % rooms.length],
+    rating: parseFloat((4.8 + (i % 3) * 0.1).toFixed(1)),
+    reviewsCount: 82 + i * 6,
+    image: staticPath,
+    roomMockup: staticPath,
+    description: `Intricately detailed Indian Ethnic wallpaper mural featuring heritage patterns, regal motifs, and classical Indian palace aesthetics. Custom printed for your exact wall dimensions.`,
+    badge: i % 3 === 0 ? 'Heritage Bestseller' : i % 4 === 0 ? 'Royal Collection' : 'Trending Ethnic'
+  };
+});
+
 export const THEME_CATEGORIES = [
   { id: 'all', name: 'Shop All', icon: '🎨', path: '/' },
   { id: 'Pichwai', name: 'Pichwai', slug: 'pichwai', path: '/category/pichwai', img: `${import.meta.env.BASE_URL}pichwai/${encodeURIComponent('Pichwai Collection_page-0002.jpg')}` },
+  { id: 'Indian Ethnic', name: 'Indian Ethnic', slug: 'indian-ethnic', path: '/category/indian-ethnic', img: `${import.meta.env.BASE_URL}Indian%20Ethnic/${encodeURIComponent('Indian Ethnic Vol. 2_page-0003.jpg')}` },
   { id: 'Tropical', name: 'Tropical', slug: 'tropical', path: '/category/tropical', img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=300&q=80' },
   { id: 'Indian Royal', name: 'Indian Royal', slug: 'indian-royal', path: '/category/indian-royal', img: 'https://images.unsplash.com/photo-1567016432779-094069958ea5?auto=format&fit=crop&w=300&q=80' },
   { id: 'Chinoiserie', name: 'Chinoiserie', slug: 'chinoiserie', path: '/category/chinoiserie', img: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=300&q=80' },
@@ -90,11 +132,11 @@ export const THEME_CATEGORIES = [
 ];
 
 export const ROOM_CATEGORIES = [
-  { id: 'Temple Room', name: 'Temple Room', slug: 'temple-room', path: '/room/temple-room', img: `${import.meta.env.BASE_URL}pichwai/${encodeURIComponent('Pichwai Collection_page-0002.jpg')}` },
   { id: 'Living Room', name: 'Living Room', slug: 'living-room', path: '/room/living-room', img: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80' },
   { id: 'Bed Room', name: 'Bed Room', slug: 'bed-room', path: '/room/bed-room', img: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800&q=80' },
   { id: 'Kids Room', name: 'Kids Room', slug: 'kids-room', path: '/room/kids-room', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80' },
-  { id: 'Dining Area', name: 'Dining Area', slug: 'dining-area', path: '/room/dining-area', img: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=800&q=80' }
+  { id: 'Dining Area', name: 'Dining Area', slug: 'dining-area', path: '/room/dining-area', img: `${import.meta.env.BASE_URL}Enhanced%20Tropical%20Dining%20Room.webp` },
+  { id: 'Temple Room', name: 'Temple Room', slug: 'temple-room', path: '/room/temple-room', img: `${import.meta.env.BASE_URL}pichwai/${encodeURIComponent('Pichwai Collection_page-0002.jpg')}` }
 ];
 
 export function getThemeFromSlug(slug) {
@@ -102,6 +144,8 @@ export function getThemeFromSlug(slug) {
   const found = THEME_CATEGORIES.find(t => t.slug === slug.toLowerCase() || t.id.toLowerCase() === slug.toLowerCase());
   if (found) return found.id;
   if (slug === 'wings-and-petals') return 'Wings & Petals';
+  if (slug === 'indian-ethnic' || slug === 'ethnic' || slug === 'indian_ethnic') return 'Indian Ethnic';
+  if (slug === 'indian-royal' || slug === 'royal' || slug === 'indian_royal') return 'Indian Royal';
   return 'all';
 }
 
@@ -115,6 +159,7 @@ export function getRoomFromSlug(slug) {
 
 export const INITIAL_WALLPAPERS = [
   ...PICHWAI_FOLDER_WALLPAPERS,
+  ...INDIAN_ETHNIC_FOLDER_WALLPAPERS,
   {
     id: 'p2',
     title: 'Emerald Mist Tropical Canopy',
@@ -191,29 +236,21 @@ export const CUSTOMER_REELS = [
   {
     id: 'r1',
     title: '"POV: You brought the mountains HOME"',
-    tagline: 'Bedroom Makeover with LIVORA',
-    image: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=600&q=80',
-    views: '145K views'
+    image: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'r2',
-    title: 'Pichwai Temple Wall Transformation',
-    tagline: 'Customized for 12ft x 9ft Wall',
-    image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80',
-    views: '230K views'
+    title: 'Arched Botanical Wall Transformation',
+    image: `${import.meta.env.BASE_URL}green-empty-room-authentic-interior-design.jpg`
   },
   {
     id: 'r3',
-    title: 'Living Room Tropical Vibe @ ₹60/sqft',
-    tagline: 'Non-Woven Eco Matte Paper',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=80',
-    views: '98K views'
+    title: 'Kids World Map Room Makeover',
+    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'r4',
-    title: 'Kids World Map Room Makeover',
-    tagline: 'Seamless Vinyl Roll Install',
-    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80',
-    views: '310K views'
+    title: 'Royal Pichwai Cow Heritage Arch',
+    image: `${import.meta.env.BASE_URL}pichwai/Pichwai%20Collection_page-0002.jpg`
   }
 ];

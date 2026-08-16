@@ -1,61 +1,55 @@
 import React from 'react';
-import { Play, Sparkles, Heart } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { CUSTOMER_REELS } from '../data/wallpapers';
 
 export default function ReelsShowcase() {
   return (
-    <section className="py-16 bg-[#faf8f5] border-t border-amber-900/10 text-slate-800 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section className="py-6 sm:py-8 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-100/80 text-amber-900 text-xs font-bold uppercase tracking-widest border border-amber-300">
-            <Sparkles className="w-3.5 h-3.5 text-amber-700" /> Real Homes, Real Magic
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-slate-900 mt-3">
-            Customer Transformations on Reels
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-600 mt-2 font-light">
-            Watch real home wall makeovers styled by top interior architects across India
-          </p>
-        </div>
-
-        {/* Reels Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-          {CUSTOMER_REELS.map((reel) => (
+        {/* Smooth 4 Cards Row matching Quirky Looks reference */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5">
+          {CUSTOMER_REELS.map((reel, index) => (
             <div
-              key={reel.id}
-              className="group relative rounded-3xl overflow-hidden aspect-[9/16] bg-amber-50 border border-amber-900/10 hover:border-amber-400 transition-all duration-500 shadow-xl cursor-pointer"
+              key={reel.id || index}
+              className="group relative rounded-2xl sm:rounded-3xl overflow-hidden aspect-[9/16] bg-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 cursor-pointer"
             >
               <img
                 src={reel.image}
-                alt={reel.title}
-                className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700"
+                alt={reel.title || 'Wallpaper Transformation'}
+                onError={(e) => {
+                  e.target.src = 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=600&q=80';
+                }}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
               />
 
-              {/* Light Bottom Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
+              {/* Subtle Gradient at Bottom */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
 
-              {/* Play Icon Badge */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-md border border-white/90 flex items-center justify-center text-amber-900 group-hover:scale-120 group-hover:bg-amber-700 group-hover:text-white transition-all duration-300 shadow-xl">
+              {/* Card 1 POV Text Overlay */}
+              {index === 0 && (
+                <div className="absolute top-1/4 sm:top-1/3 left-0 right-0 px-3 sm:px-4 text-center">
+                  <p className="text-white font-serif font-bold text-xs sm:text-sm drop-shadow-md tracking-wide">
+                    "POV"
+                  </p>
+                  <p className="text-white font-serif text-[11px] sm:text-xs drop-shadow-md font-medium mt-0.5">
+                    You brought the mountains HOME
+                  </p>
+                </div>
+              )}
+
+              {/* Bottom Brand Logo Watermark */}
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center items-center pointer-events-none">
+                <span className="font-serif text-white/90 text-sm sm:text-base tracking-[0.25em] font-light drop-shadow-md">
+                  LIVORA
+                </span>
+              </div>
+
+              {/* Hover Play Button */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-900 shadow-xl group-hover:scale-110 transition-transform">
                   <Play className="w-5 h-5 fill-current ml-0.5" />
                 </div>
-              </div>
-
-              {/* Views Tag Top */}
-              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-amber-900 border border-amber-200/80 flex items-center gap-1 shadow-sm">
-                <Heart className="w-3 h-3 text-rose-500 fill-current" />
-                {reel.views}
-              </div>
-
-              {/* Bottom Caption */}
-              <div className="absolute bottom-4 left-4 right-4 text-white">
-                <h3 className="font-serif font-bold text-sm leading-snug text-white group-hover:text-amber-200 transition">
-                  {reel.title}
-                </h3>
-                <p className="text-[11px] text-slate-200 font-light mt-1">
-                  {reel.tagline}
-                </p>
               </div>
 
             </div>

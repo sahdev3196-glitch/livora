@@ -114,7 +114,7 @@ function CatalogContent() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#faf8f5]">
+    <div className="min-h-screen flex flex-col bg-white">
       
       {/* Header Navigation */}
       <Header
@@ -125,27 +125,28 @@ function CatalogContent() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1">
+      <main className="flex-1 bg-white">
         
         {/* Hero & Category Carousels - standard home features */}
         {selectedTheme === 'all' && selectedRoom === 'all' && !searchQuery && location.pathname === '/' && (
           <>
             <HeroBanner onExplore={() => document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' })} />
             <ShopByThemes activeTheme={selectedTheme} />
+            <ReelsShowcase />
             <ShopByRoom activeRoom={selectedRoom} />
           </>
         )}
 
         {/* Catalog Section */}
-        <section id="catalog-section" className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section id="catalog-section" className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-white">
           
           {/* Section Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-amber-900/10 gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-slate-100 gap-4">
             <div>
-              <span className="text-[11px] font-bold text-amber-800 uppercase tracking-widest bg-amber-100/60 px-2.5 py-0.5 rounded">
+              <span className="text-[11px] font-bold text-amber-900 uppercase tracking-widest bg-amber-50 border border-amber-200/60 px-2.5 py-0.5 rounded">
                 {selectedTheme === 'wishlist' ? 'Saved Wallpapers' : 'LIVORA Collection'}
               </span>
-              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 mt-1 flex items-center gap-2">
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 mt-1.5 flex items-center gap-2">
                 {selectedTheme === 'wishlist' ? (
                   <>
                     <Heart className="w-6 h-6 text-rose-500 fill-current" />
@@ -165,7 +166,7 @@ function CatalogContent() {
                   ← Back to Home
                 </Link>
               )}
-              <div className="text-xs font-semibold text-slate-500 bg-white border border-amber-900/10 px-3.5 py-1.5 rounded-full shadow-xs">
+              <div className="text-xs font-semibold text-slate-500 bg-white border border-slate-200 px-3.5 py-1.5 rounded-full shadow-xs">
                 Showing <strong>{totalItems > 0 ? `${startIndex + 1}-${endIndex}` : 0}</strong> of <strong>{totalItems}</strong> Made-to-Order Wallpapers (@ ₹60/sqft)
               </div>
             </div>
@@ -248,11 +249,6 @@ function CatalogContent() {
           )}
 
         </section>
-
-        {/* Customer Reels Video Showcase */}
-        {selectedTheme === 'all' && selectedRoom === 'all' && !searchQuery && location.pathname === '/' && (
-          <ReelsShowcase />
-        )}
 
       </main>
 

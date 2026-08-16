@@ -3,8 +3,12 @@ import { X, Lock, Mail, User as UserIcon, Phone, AlertCircle } from 'lucide-reac
 import { useAuth } from '../context/AuthContext';
 
 export default function AuthModal() {
-  const { isAuthOpen, setIsAuthOpen, login, signup, googleLogin, loading } = useAuth();
-  const [tab, setTab] = useState('login'); // 'login' or 'signup'
+  const { isAuthOpen, setIsAuthOpen, authTab, login, signup, googleLogin, loading } = useAuth();
+  const [tab, setTab] = useState(authTab || 'login'); // 'login' or 'signup'
+  
+  React.useEffect(() => {
+    if (authTab) setTab(authTab);
+  }, [authTab, isAuthOpen]);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

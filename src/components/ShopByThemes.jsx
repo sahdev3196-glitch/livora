@@ -12,9 +12,9 @@ export default function ShopByThemes({ activeTheme }) {
           Shop By Themes
         </h2>
 
-        {/* 6 Circular Category Cards */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-6 sm:gap-8 items-start">
-          {THEME_CATEGORIES.slice(0, 6).map((theme) => {
+        {/* Circular Category Cards */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-4 sm:gap-6 items-start">
+          {THEME_CATEGORIES.filter(t => t.id !== 'all').map((theme) => {
             const isSelected = activeTheme === theme.id;
             const hasImage = !!theme.img;
             

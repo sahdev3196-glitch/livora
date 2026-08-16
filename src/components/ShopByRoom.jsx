@@ -1,57 +1,49 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ROOM_CATEGORIES } from '../data/wallpapers';
-import { ArrowRight } from 'lucide-react';
 
 export default function ShopByRoom({ activeRoom }) {
   return (
-    <section className="py-12 bg-[#faf8f5] border-b border-amber-900/10">
+    <section className="py-10 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 gap-4">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900">
-              Shop Wallpapers By Room
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Find accent designs crafted specifically for each space in your home
-            </p>
-          </div>
-        </div>
+        {/* Clean Left-Aligned Title */}
+        <h2 className="text-2xl sm:text-3xl font-serif text-slate-900 mb-6">
+          Shop Wallpapers By Room
+        </h2>
 
-        {/* Room Category Cards Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6">
+        {/* 5 Non-Pointy Rounded Room Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
           {ROOM_CATEGORIES.map((room) => {
             const isSelected = activeRoom === room.id;
             return (
               <Link
                 key={room.id}
                 to={room.path}
-                className={`group relative rounded-2xl overflow-hidden aspect-[4/5] text-left transition-all duration-300 ${
-                  isSelected ? 'ring-4 ring-amber-700 shadow-xl scale-[1.02]' : 'hover:shadow-lg'
-                }`}
+                className="group flex flex-col items-center text-center cursor-pointer focus:outline-none"
               >
-                <img
-                  src={room.img}
-                  alt={room.name}
-                  onError={(e) => {
-                    e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80';
-                  }}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
-                
-                {/* Title */}
-                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
-                  <span className="font-serif font-semibold text-sm sm:text-base tracking-wide">
-                    {room.name}
-                  </span>
-                  <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center group-hover:bg-amber-500 group-hover:text-slate-950 transition">
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </div>
+                {/* Image Container with Smooth Non-Pointy Rounded Corners */}
+                <div className={`w-full aspect-[4/3] rounded-xl sm:rounded-2xl overflow-hidden bg-slate-100 transition-all duration-300 ${
+                  isSelected
+                    ? 'ring-3 ring-amber-700 shadow-md scale-[1.02]'
+                    : 'shadow-xs group-hover:shadow-md group-hover:scale-[1.02]'
+                }`}>
+                  <img
+                    src={room.img}
+                    alt={room.name}
+                    onError={(e) => {
+                      e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80';
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                  />
                 </div>
+                
+                {/* Room Title Below Card */}
+                <span className={`mt-3 text-xs sm:text-sm font-medium transition ${
+                  isSelected ? 'text-amber-900 font-bold' : 'text-slate-800 group-hover:text-amber-800'
+                }`}>
+                  {room.name}
+                </span>
               </Link>
             );
           })}

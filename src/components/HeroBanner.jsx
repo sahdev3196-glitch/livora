@@ -4,33 +4,23 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 const HERO_SLIDES = [
   {
     id: 1,
-    title: 'Enhanced Tropical Dining Room',
-    image: `${import.meta.env.BASE_URL}Enhanced%20Tropical%20Dining%20Room.webp`
+    title: 'LIVORA Luxury Custom Wallpaper Collection',
+    image: `${import.meta.env.BASE_URL}crsl.webp`
   },
   {
     id: 2,
-    title: 'Pichwai & Chinoiserie Heritage',
-    image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=2000&q=85'
+    title: 'Emerald Botanical Heritage Living Room',
+    image: `${import.meta.env.BASE_URL}green-empty-room-authentic-interior-design.jpg`
   },
   {
     id: 3,
-    title: 'Emerald Mist Tropical Canopy',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=2000&q=85'
+    title: 'Classical Indian Mughal Heritage Wall Mural',
+    image: `${import.meta.env.BASE_URL}the-artwill-AWzFKOH5UIQ-unsplash.jpg`
   },
   {
     id: 4,
-    title: 'Golden Horizon Mountains & Fog',
-    image: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=2000&q=85'
-  },
-  {
-    id: 5,
-    title: 'Royal Palace Architecture',
-    image: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=2000&q=85'
-  },
-  {
-    id: 6,
-    title: 'Explorer World Map & Animals',
-    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=2000&q=85'
+    title: 'Enhanced Tropical Dining Room',
+    image: `${import.meta.env.BASE_URL}Enhanced%20Tropical%20Dining%20Room.webp`
   }
 ];
 
@@ -76,35 +66,39 @@ export default function HeroBanner() {
       ))}
 
       {/* Manual Navigation Controls (Light Glassmorphic Arrows) */}
-      <button
-        onClick={goToPrev}
-        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 p-3 sm:p-3.5 rounded-full bg-white/80 hover:bg-white text-slate-800 hover:text-amber-900 backdrop-blur-md transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-xl border border-amber-900/10 cursor-pointer"
-        title="Previous Wallpaper"
-      >
-        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-      </button>
-
-      <button
-        onClick={goToNext}
-        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 p-3 sm:p-3.5 rounded-full bg-white/80 hover:bg-white text-slate-800 hover:text-amber-900 backdrop-blur-md transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-xl border border-amber-900/10 cursor-pointer"
-        title="Next Wallpaper"
-      >
-        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-      </button>
-
-      {/* Slide Indicators Bar (Light Glass Theme) */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white/85 backdrop-blur-md px-4 py-2 rounded-full border border-amber-900/10 shadow-lg">
-        {HERO_SLIDES.map((_, idx) => (
+      {HERO_SLIDES.length > 1 && (
+        <>
           <button
-            key={idx}
-            onClick={() => setCurrentIndex(idx)}
-            className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-              idx === currentIndex ? 'w-8 bg-amber-700' : 'w-2 bg-amber-900/30 hover:bg-amber-800'
-            }`}
-            title={`Go to slide ${idx + 1}`}
-          />
-        ))}
-      </div>
+            onClick={goToPrev}
+            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 p-3 sm:p-3.5 rounded-full bg-white/80 hover:bg-white text-slate-800 hover:text-amber-900 backdrop-blur-md transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-xl border border-amber-900/10 cursor-pointer"
+            title="Previous Wallpaper"
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+
+          <button
+            onClick={goToNext}
+            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 p-3 sm:p-3.5 rounded-full bg-white/80 hover:bg-white text-slate-800 hover:text-amber-900 backdrop-blur-md transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-xl border border-amber-900/10 cursor-pointer"
+            title="Next Wallpaper"
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+
+          {/* Slide Indicators Bar (Light Glass Theme) */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white/85 backdrop-blur-md px-4 py-2 rounded-full border border-amber-900/10 shadow-lg">
+            {HERO_SLIDES.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === currentIndex ? 'w-8 bg-amber-700' : 'w-2 bg-amber-900/30 hover:bg-amber-800'
+                }`}
+                title={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
     </section>
   );
