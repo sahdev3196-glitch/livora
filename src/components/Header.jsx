@@ -198,7 +198,14 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                     className="flex items-center gap-3 p-2 rounded-xl hover:bg-amber-50/80 hover:text-amber-900 transition text-slate-700 font-medium"
                   >
                     {t.img ? (
-                      <img src={t.img} alt={t.name} className="w-7 h-7 rounded-full object-cover shrink-0 border border-amber-700/20" />
+                      <img
+                        src={t.img}
+                        alt={t.name}
+                        onError={(e) => {
+                          e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=300&q=80';
+                        }}
+                        className="w-7 h-7 rounded-full object-cover shrink-0 border border-amber-700/20"
+                      />
                     ) : (
                       <span className="text-base">{t.icon}</span>
                     )}
@@ -227,7 +234,14 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                     to={r.path}
                     className="flex items-center gap-3 p-2 rounded-xl hover:bg-amber-50/80 hover:text-amber-900 transition text-slate-700 font-medium"
                   >
-                    <img src={r.img} alt={r.name} className="w-7 h-7 rounded-lg object-cover shrink-0 border border-amber-700/20" />
+                    <img
+                      src={r.img}
+                      alt={r.name}
+                      onError={(e) => {
+                        e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=300&q=80';
+                      }}
+                      className="w-7 h-7 rounded-lg object-cover shrink-0 border border-amber-700/20"
+                    />
                     <span className="text-xs font-semibold">{r.name} Wallpapers</span>
                   </Link>
                 ))}

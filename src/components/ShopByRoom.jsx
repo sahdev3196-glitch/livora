@@ -34,6 +34,9 @@ export default function ShopByRoom({ activeRoom }) {
                 <img
                   src={room.img}
                   alt={room.name}
+                  onError={(e) => {
+                    e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80';
+                  }}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 

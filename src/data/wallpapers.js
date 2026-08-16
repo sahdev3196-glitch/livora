@@ -41,13 +41,14 @@ export const PAPER_OPTIONS = [
   }
 ];
 
-const PICHWAI_PAGES_COUNT = 32;
+const PICHWAI_PAGES_COUNT = 30;
 
 const PICHWAI_FOLDER_WALLPAPERS = Array.from({ length: PICHWAI_PAGES_COUNT }, (_, i) => {
-  const num = String(i + 1).padStart(4, '0');
+  const pageNum = i + 2; // Pichwai Collection files start at page-0002
+  const num = String(pageNum).padStart(4, '0');
   const codeNum = String(i + 1).padStart(2, '0');
   const fileName = `Pichwai Collection_page-${num}.jpg`;
-  const encodedPath = `/api/images/pichwai/${encodeURIComponent(fileName)}`;
+  const staticPath = `${import.meta.env.BASE_URL}pichwai/${encodeURIComponent(fileName)}`;
   
   const titles = [
     'Shrinathji Lotus Shrine Pichwai',
@@ -71,8 +72,8 @@ const PICHWAI_FOLDER_WALLPAPERS = Array.from({ length: PICHWAI_PAGES_COUNT }, (_
     room: 'Temple Room',
     rating: parseFloat((4.7 + (i % 4) * 0.1).toFixed(1)),
     reviewsCount: 75 + i * 5,
-    image: encodedPath,
-    roomMockup: encodedPath,
+    image: staticPath,
+    roomMockup: staticPath,
     description: `Authentic handcrafted Indian Pichwai wallpaper mural artwork featuring holy cows, lotus motifs, and traditional temple designs. Made-to-measure for your wall size.`,
     badge: i % 3 === 0 ? 'Pichwai Bestseller' : i % 5 === 0 ? 'Trending Heritage' : 'Exclusive Collection'
   };
@@ -80,7 +81,7 @@ const PICHWAI_FOLDER_WALLPAPERS = Array.from({ length: PICHWAI_PAGES_COUNT }, (_
 
 export const THEME_CATEGORIES = [
   { id: 'all', name: 'Shop All', icon: '🎨', path: '/' },
-  { id: 'Pichwai', name: 'Pichwai', slug: 'pichwai', path: '/category/pichwai', img: `/api/images/pichwai/${encodeURIComponent('Pichwai Collection_page-0001.jpg')}` },
+  { id: 'Pichwai', name: 'Pichwai', slug: 'pichwai', path: '/category/pichwai', img: `${import.meta.env.BASE_URL}pichwai/${encodeURIComponent('Pichwai Collection_page-0002.jpg')}` },
   { id: 'Tropical', name: 'Tropical', slug: 'tropical', path: '/category/tropical', img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=300&q=80' },
   { id: 'Indian Royal', name: 'Indian Royal', slug: 'indian-royal', path: '/category/indian-royal', img: 'https://images.unsplash.com/photo-1567016432779-094069958ea5?auto=format&fit=crop&w=300&q=80' },
   { id: 'Chinoiserie', name: 'Chinoiserie', slug: 'chinoiserie', path: '/category/chinoiserie', img: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=300&q=80' },
@@ -89,7 +90,7 @@ export const THEME_CATEGORIES = [
 ];
 
 export const ROOM_CATEGORIES = [
-  { id: 'Temple Room', name: 'Temple Room', slug: 'temple-room', path: '/room/temple-room', img: `/api/images/pichwai/${encodeURIComponent('Pichwai Collection_page-0001.jpg')}` },
+  { id: 'Temple Room', name: 'Temple Room', slug: 'temple-room', path: '/room/temple-room', img: `${import.meta.env.BASE_URL}pichwai/${encodeURIComponent('Pichwai Collection_page-0002.jpg')}` },
   { id: 'Living Room', name: 'Living Room', slug: 'living-room', path: '/room/living-room', img: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80' },
   { id: 'Bed Room', name: 'Bed Room', slug: 'bed-room', path: '/room/bed-room', img: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800&q=80' },
   { id: 'Kids Room', name: 'Kids Room', slug: 'kids-room', path: '/room/kids-room', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80' },

@@ -193,8 +193,8 @@ function getLocalFolderProducts() {
               room,
               rating: 4.9,
               reviewsCount: 88 + idx * 4,
-              image: `/api/images/${folder}/${encodedFile}`,
-              roomMockup: `/api/images/${folder}/${encodedFile}`,
+              image: `${folder}/${encodedFile}`,
+              roomMockup: `${folder}/${encodedFile}`,
               description: `Luxury made-to-measure ${theme} wallpaper mural.`,
               badge: `${theme} Heritage`
             });

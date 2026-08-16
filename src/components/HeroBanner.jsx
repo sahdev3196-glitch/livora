@@ -5,7 +5,7 @@ const HERO_SLIDES = [
   {
     id: 1,
     title: 'Enhanced Tropical Dining Room',
-    image: '/Enhanced Tropical Dining Room.webp'
+    image: `${import.meta.env.BASE_URL}Enhanced%20Tropical%20Dining%20Room.webp`
   },
   {
     id: 2,
@@ -67,6 +67,9 @@ export default function HeroBanner() {
           <img
             src={slide.image}
             alt={slide.title}
+            onError={(e) => {
+              e.target.src = 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=2000&q=85';
+            }}
             className="w-full h-full object-cover object-center transform scale-100 group-hover:scale-105 transition-transform duration-1000 ease-out"
           />
         </div>

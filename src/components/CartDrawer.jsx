@@ -55,7 +55,14 @@ export default function CartDrawer() {
               >
                 {/* Thumbnail */}
                 <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-amber-200">
-                  <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    onError={(e) => {
+                      e.target.src = 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=300&q=80';
+                    }}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
                 {/* Info */}

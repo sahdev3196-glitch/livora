@@ -38,13 +38,20 @@ export function buildCloudinaryUrl(publicIdOrUrl, options = {}) {
     return publicIdOrUrl.replace('/upload/', `/upload/${transformString}/`);
   }
 
-  // If publicId without full URL
-  if (!publicIdOrUrl.startsWith('http') && !publicIdOrUrl.startsWith('/')) {
-    return `${CLOUDINARY_CONFIG.baseUrl}/${transformString}/${publicIdOrUrl}`;
+  // If full HTTP/HTTPS URL, relative path, data URI, or blob URL, return directly
+  if (
+    publicIdOrUrl.startsWith('http://') ||
+    publicIdOrUrl.startsWith('https://') ||
+    publicIdOrUrl.startsWith('/') ||
+    publicIdOrUrl.startsWith('./') ||
+    publicIdOrUrl.startsWith('data:') ||
+    publicIdOrUrl.startsWith('blob:')
+  ) {
+    return publicIdOrUrl;
   }
 
-  // Otherwise return original URL or relative asset path
-  return publicIdOrUrl;
+  // Otherwise assume it's a Cloudinary publicId
+  return `${CLOUDINARY_CONFIG.baseUrl}/${transformString}/${publicIdOrUrl}`;
 }
 
 /**
@@ -63,13 +70,18 @@ export async function uploadToCloudinary(fileOrBase64, folder = 'livora_wallpape
       });
     }
 
-    const response = await fetch('/api/cloudinary/upload', {
+    const apiBase = import.meta.env.VITE_API_URL || '';
+    const response = await fetch(`${apiBase}/api/cloudinary/upload`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ image: payload, folder })
     });
+
+    if (!response.ok) {
+      throw new Error(`Upload server returned ${response.status}`);
+    }
 
     const data = await response.json();
     return data;
@@ -78,3 +90,4 @@ export async function uploadToCloudinary(fileOrBase64, folder = 'livora_wallpape
     return { success: false, error: error.message };
   }
 }
+

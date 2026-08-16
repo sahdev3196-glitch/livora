@@ -92,6 +92,9 @@ export default function WallpaperCustomizer({ product, onClose }) {
               <img
                 src={activeImage}
                 alt={product.title}
+                onError={(e) => {
+                  e.target.src = 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1000&q=80';
+                }}
                 className="w-full h-full object-contain rounded-xl transition-all duration-300"
               />
             </div>
@@ -106,7 +109,14 @@ export default function WallpaperCustomizer({ product, onClose }) {
                     activeImage === imgUrl ? 'border-amber-700 ring-2 ring-amber-700/20 shadow-sm' : 'border-amber-200/60 opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                  <img
+                    src={imgUrl}
+                    alt={`Thumbnail ${idx + 1}`}
+                    onError={(e) => {
+                      e.target.src = 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=300&q=80';
+                    }}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
