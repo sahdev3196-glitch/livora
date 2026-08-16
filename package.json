@@ -3,13 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "homepage": "https://sahdev3196-glitch.github.io/livora",
   "scripts": {
     "dev": "vite",
     "server": "node server/index.js",
     "start": "concurrently \"npm run server\" \"npm run dev\"",
     "build": "vite build",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d docs",
+    "deploy": "gh-pages -d dist",
     "preview": "vite preview"
   },
   "dependencies": {
