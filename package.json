@@ -9,6 +9,7 @@
     "server": "node server/index.js",
     "start": "concurrently \"npm run server\" \"npm run dev\"",
     "build": "vite build",
+    "postbuild": "npx shx cp -r dist/* .",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "preview": "vite preview"
@@ -34,6 +35,7 @@
     "concurrently": "^8.2.2",
     "gh-pages": "^6.3.0",
     "postcss": "^8.4.38",
+    "shx": "^0.4.0",
     "tailwindcss": "^3.4.3",
     "vite": "^5.2.11"
   }
