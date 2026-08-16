@@ -4,8 +4,12 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
 import { db } from './database.js';
 import { seedDB } from './seed.js';
+import cloudinary, { uploadImageToCloudinary, getOptimizedImageUrl } from './cloudinary.js';
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,8 +18,33 @@ const JWT_SECRET = process.env.JWT_SECRET || 'livora_wallpaper_secret_key_2026';
 // Seed initial database
 seedDB();
 
+
 app.use(cors());
 app.use(express.json());
+
+// Serve static images directly from server
+app.use('/public', express.static(path.resolve('public')));
+app.use('/pichwai', express.static(path.resolve('public/pichwai')));
+if (fs.existsSync(path.resolve('pichwai'))) {
+  app.use('/pichwai', express.static(path.resolve('pichwai')));
+}
+
+// Dedicated server image route
+app.get('/api/images/:folder/:filename', (req, res) => {
+  const { folder, filename } = req.params;
+  const decodedFilename = decodeURIComponent(filename);
+  const primaryPath = path.resolve('public', folder, decodedFilename);
+  const secondaryPath = path.resolve(folder, decodedFilename);
+  
+  if (fs.existsSync(primaryPath)) {
+    return res.sendFile(primaryPath);
+  } else if (fs.existsSync(secondaryPath)) {
+    return res.sendFile(secondaryPath);
+  }
+  
+  res.status(404).json({ error: 'Image not found on server' });
+});
+
 
 // Auth Middleware
 const authenticateToken = (req, res, next) => {
@@ -164,8 +193,8 @@ function getLocalFolderProducts() {
               room,
               rating: 4.9,
               reviewsCount: 88 + idx * 4,
-              image: `/${folder}/${encodedFile}`,
-              roomMockup: `/${folder}/${encodedFile}`,
+              image: `/api/images/${folder}/${encodedFile}`,
+              roomMockup: `/api/images/${folder}/${encodedFile}`,
               description: `Luxury made-to-measure ${theme} wallpaper mural.`,
               badge: `${theme} Heritage`
             });
@@ -179,6 +208,65 @@ function getLocalFolderProducts() {
 
   return customProducts;
 }
+
+// --- CLOUDINARY IMAGE ROUTES ---
+app.get('/api/cloudinary/config', (req, res) => {
+  res.json({
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'nslcfmss',
+    apiKey: process.env.CLOUDINARY_API_KEY || '813653695963947',
+    uploadPreset: 'livora_wallpapers',
+    active: true
+  });
+});
+
+app.post('/api/cloudinary/upload', async (req, res) => {
+  try {
+    const { image, folder = 'livora_wallpapers', tags } = req.body;
+    if (!image) {
+      return res.status(400).json({ error: 'Image file or URL is required' });
+    }
+
+    const uploadRes = await uploadImageToCloudinary(image, {
+      folder,
+      tags: tags ? tags.split(',') : ['livora', 'wallpaper']
+    });
+
+    if (!uploadRes.success) {
+      return res.status(500).json({ error: uploadRes.error });
+    }
+
+    res.json({
+      message: 'Image uploaded successfully to Cloudinary!',
+      ...uploadRes
+    });
+  } catch (err) {
+    console.error('Cloudinary upload endpoint error:', err);
+    res.status(500).json({ error: 'Failed to process image upload' });
+  }
+});
+
+app.post('/api/cloudinary/signature', (req, res) => {
+  try {
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    const folder = req.body.folder || 'livora_wallpapers';
+    
+    const signature = cloudinary.utils.api_sign_request(
+      { timestamp, folder },
+      process.env.CLOUDINARY_API_SECRET || 'Od8QMCbiqZvd32Wg3mJtX9sI25k'
+    );
+
+    res.json({
+      timestamp,
+      signature,
+      apiKey: process.env.CLOUDINARY_API_KEY || '813653695963947',
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'nslcfmss',
+      folder
+    });
+  } catch (err) {
+    console.error('Error generating signature:', err);
+    res.status(500).json({ error: 'Failed to generate signature' });
+  }
+});
 
 // --- CATALOG ROUTES ---
 app.get('/api/products', (req, res) => {

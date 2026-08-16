@@ -72,19 +72,16 @@ function CatalogContent() {
     }
   }, [location.pathname, selectedTheme, selectedRoom]);
 
-  // Try fetching products from backend API, fallback to initial catalog
+  // Fetch products directly from backend server API
   useEffect(() => {
     fetch('/api/products')
       .then(res => res.json())
       .then(data => {
         if (data.products && data.products.length > 0) {
-          const map = new Map();
-          INITIAL_WALLPAPERS.forEach(p => map.set(p.id, p));
-          data.products.forEach(p => map.set(p.id, p));
-          setProducts(Array.from(map.values()));
+          setProducts(data.products);
         }
       })
-      .catch(err => console.log('Using local products catalog fallback'));
+      .catch(err => console.log('Using initial products catalog fallback', err));
   }, []);
 
   // Filtering Logic
