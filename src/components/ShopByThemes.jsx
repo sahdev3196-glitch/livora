@@ -16,6 +16,7 @@ export default function ShopByThemes({ activeTheme }) {
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-6 sm:gap-8 items-start">
           {THEME_CATEGORIES.slice(0, 6).map((theme) => {
             const isSelected = activeTheme === theme.id;
+            const hasImage = !!theme.img;
             
             return (
               <Link
@@ -23,18 +24,25 @@ export default function ShopByThemes({ activeTheme }) {
                 to={theme.path}
                 className="flex flex-col items-center text-center group focus:outline-none cursor-pointer"
               >
-                {/* Circular Image Container */}
+                {/* Circular Image / Icon Container */}
                 <div className={`w-24 h-24 sm:w-32 lg:w-36 sm:h-32 lg:h-36 rounded-full overflow-hidden transition-all duration-300 ${
                   isSelected 
                     ? 'ring-4 ring-amber-700 shadow-md scale-105' 
                     : 'group-hover:scale-105 group-hover:shadow-lg'
                 }`}>
-                  <img
-                    src={theme.img}
-                    alt={theme.name}
-                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=300&q=80'; }}
-                    className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500"
-                  />
+                  {hasImage ? (
+                    <img
+                      src={theme.img}
+                      alt={theme.name}
+                      onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=300&q=80'; }}
+                      className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-full flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-amber-100 via-amber-50 to-orange-100 group-hover:from-amber-200 group-hover:to-orange-200 transition-all duration-500">
+                      <span className="text-3xl sm:text-4xl group-hover:scale-110 transition-transform duration-300">{theme.icon || '🎨'}</span>
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-amber-800/70">Explore</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Title Below Circle */}
@@ -52,3 +60,4 @@ export default function ShopByThemes({ activeTheme }) {
     </section>
   );
 }
+
