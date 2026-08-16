@@ -35,37 +35,37 @@ export default function AuthModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-white/50 relative">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-amber-950/30 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-amber-200/60 relative">
         
         {/* Close Button */}
         <button
           onClick={() => setIsAuthOpen(false)}
-          className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition z-10"
+          className="absolute top-4 right-4 p-2 rounded-full text-amber-100 hover:text-white hover:bg-amber-900/30 transition z-10 cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
-        <div className="bg-[#1a1615] text-amber-50 p-6 text-center">
-          <span className="font-serif text-2xl font-bold tracking-widest block text-amber-400">
+        <div className="bg-gradient-to-r from-amber-800 to-amber-900 text-white p-6 text-center">
+          <span className="font-serif text-2xl font-bold tracking-widest block text-amber-200">
             LIVORA
           </span>
-          <p className="text-xs text-amber-200/70 mt-1 font-light">
+          <p className="text-xs text-amber-100/90 mt-1 font-light">
             {tab === 'login' ? 'Welcome back! Log in to access your orders' : 'Create an account to save custom wall dimensions'}
           </p>
 
           {/* Tabs */}
-          <div className="flex bg-slate-900 p-1 rounded-full border border-amber-900/40 mt-4 text-xs font-semibold">
+          <div className="flex bg-amber-950/40 p-1 rounded-full border border-amber-500/30 mt-4 text-xs font-semibold">
             <button
               onClick={() => { setTab('login'); setError(''); }}
-              className={`flex-1 py-2 rounded-full transition ${tab === 'login' ? 'bg-amber-700 text-white shadow' : 'text-amber-200/60 hover:text-white'}`}
+              className={`flex-1 py-2 rounded-full transition cursor-pointer ${tab === 'login' ? 'bg-amber-600 text-white shadow' : 'text-amber-200/80 hover:text-white'}`}
             >
               Sign In
             </button>
             <button
               onClick={() => { setTab('signup'); setError(''); }}
-              className={`flex-1 py-2 rounded-full transition ${tab === 'signup' ? 'bg-amber-700 text-white shadow' : 'text-amber-200/60 hover:text-white'}`}
+              className={`flex-1 py-2 rounded-full transition cursor-pointer ${tab === 'signup' ? 'bg-amber-600 text-white shadow' : 'text-amber-200/80 hover:text-white'}`}
             >
               Create Account
             </button>
@@ -80,7 +80,7 @@ export default function AuthModal() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full bg-white hover:bg-slate-50 text-slate-800 font-semibold py-3 px-4 rounded-xl border border-slate-200 shadow-xs transition flex items-center justify-center gap-3 cursor-pointer group"
+            className="w-full bg-white hover:bg-amber-50/50 text-slate-800 font-semibold py-3 px-4 rounded-xl border border-amber-200/80 shadow-xs transition flex items-center justify-center gap-3 cursor-pointer group"
           >
             <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -93,8 +93,8 @@ export default function AuthModal() {
 
           {/* Divider */}
           <div className="relative flex items-center justify-center my-1">
-            <div className="border-t border-slate-200 w-full" />
-            <span className="bg-white px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest relative shrink-0">
+            <div className="border-t border-amber-200/60 w-full" />
+            <span className="bg-white px-3 text-[10px] font-bold text-amber-800/60 uppercase tracking-widest relative shrink-0">
               or
             </span>
           </div>
@@ -118,9 +118,9 @@ export default function AuthModal() {
                   placeholder="e.g. Vikram Sharma"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-700 focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 bg-amber-50/40 border border-amber-200/80 rounded-xl text-sm focus:ring-2 focus:ring-amber-700 focus:outline-none"
                 />
-                <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <UserIcon className="w-4 h-4 text-amber-700 absolute left-3 top-3" />
               </div>
             </div>
           )}
@@ -134,9 +134,9 @@ export default function AuthModal() {
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-700 focus:outline-none"
+                className="w-full pl-10 pr-4 py-2.5 bg-amber-50/40 border border-amber-200/80 rounded-xl text-sm focus:ring-2 focus:ring-amber-700 focus:outline-none"
               />
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <Mail className="w-4 h-4 text-amber-700 absolute left-3 top-3" />
             </div>
           </div>
 
@@ -149,9 +149,9 @@ export default function AuthModal() {
                   placeholder="+91 98765 43210"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-700 focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 bg-amber-50/40 border border-amber-200/80 rounded-xl text-sm focus:ring-2 focus:ring-amber-700 focus:outline-none"
                 />
-                <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <Phone className="w-4 h-4 text-amber-700 absolute left-3 top-3" />
               </div>
             </div>
           )}
@@ -165,16 +165,16 @@ export default function AuthModal() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-700 focus:outline-none"
+                className="w-full pl-10 pr-4 py-2.5 bg-amber-50/40 border border-amber-200/80 rounded-xl text-sm focus:ring-2 focus:ring-amber-700 focus:outline-none"
               />
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <Lock className="w-4 h-4 text-amber-700 absolute left-3 top-3" />
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-slate-950 hover:bg-amber-900 text-amber-50 font-bold py-3.5 rounded-xl shadow-lg transition duration-200 flex items-center justify-center gap-2 mt-2"
+            className="w-full bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 hover:from-amber-800 hover:to-amber-950 text-white font-bold py-3.5 rounded-xl shadow-lg transition duration-200 flex items-center justify-center gap-2 mt-2 cursor-pointer"
           >
             {loading ? (
               <span>Processing...</span>

@@ -64,17 +64,17 @@ export default function WallpaperCustomizer({ product, onClose }) {
   ].filter(Boolean);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in">
-      <div className="bg-white rounded-2xl max-w-6xl w-full overflow-hidden shadow-2xl border border-slate-200 relative max-h-[94vh] flex flex-col">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-amber-950/30 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+      <div className="bg-white rounded-3xl max-w-6xl w-full overflow-hidden shadow-2xl border border-amber-200/60 relative max-h-[94vh] flex flex-col">
 
         {/* Top Header bar with close button */}
-        <div className="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white z-10 shrink-0">
-          <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+        <div className="px-6 py-3.5 border-b border-amber-200/60 flex items-center justify-between bg-amber-50/40 z-10 shrink-0">
+          <span className="text-xs font-bold tracking-widest text-amber-900 uppercase">
             LIVORA Wallpaper Customizer
           </span>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
+            className="p-1.5 rounded-full text-slate-400 hover:text-amber-900 hover:bg-amber-100/60 transition cursor-pointer"
             title="Close Customizer"
           >
             <X className="w-5 h-5" />
@@ -88,7 +88,7 @@ export default function WallpaperCustomizer({ product, onClose }) {
           <div className="lg:col-span-7 space-y-4">
 
             {/* Main Big Image Box */}
-            <div className="relative rounded-2xl overflow-hidden bg-slate-100/80 aspect-[4/3] border border-slate-200/80 shadow-xs flex items-center justify-center p-2">
+            <div className="relative rounded-2xl overflow-hidden bg-amber-50/30 aspect-[4/3] border border-amber-200/60 shadow-xs flex items-center justify-center p-2">
               <img
                 src={activeImage}
                 alt={product.title}
@@ -102,8 +102,9 @@ export default function WallpaperCustomizer({ product, onClose }) {
                 <button
                   key={idx}
                   onClick={() => setActiveImage(imgUrl)}
-                  className={`w-20 h-16 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${activeImage === imgUrl ? 'border-black ring-2 ring-black/10 shadow-sm' : 'border-slate-200 opacity-70 hover:opacity-100'
-                    }`}
+                  className={`w-20 h-16 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
+                    activeImage === imgUrl ? 'border-amber-700 ring-2 ring-amber-700/20 shadow-sm' : 'border-amber-200/60 opacity-70 hover:opacity-100'
+                  }`}
                 >
                   <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
                 </button>
@@ -112,20 +113,21 @@ export default function WallpaperCustomizer({ product, onClose }) {
 
           </div>
 
-          {/* Right Column: Customization Form (5 cols) matching screenshot exact UI */}
+          {/* Right Column: Customization Form (5 cols) */}
           <div className="lg:col-span-5 space-y-5">
 
             {/* Product Title & Wishlist Heart Button */}
             <div className="flex items-center justify-between gap-4">
-              <h1 className="text-2xl sm:text-3xl font-serif text-slate-900 font-normal leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-serif text-slate-900 font-bold leading-tight">
                 {product.title}
               </h1>
               <button
                 onClick={() => toggleWishlist(product)}
-                className={`p-2.5 rounded-full border transition-all shrink-0 ${isWishlisted
+                className={`p-2.5 rounded-full border transition-all shrink-0 cursor-pointer ${
+                  isWishlisted
                     ? 'border-rose-200 bg-rose-50 text-rose-500'
-                    : 'border-slate-200 text-slate-700 hover:text-slate-900 hover:border-slate-300 bg-white'
-                  }`}
+                    : 'border-amber-200 text-slate-700 hover:text-rose-500 hover:border-rose-200 bg-white'
+                }`}
                 title={isWishlisted ? "Remove from Wishlist" : "Save to Wishlist"}
               >
                 <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-rose-500 text-rose-500' : ''}`} />
@@ -133,7 +135,7 @@ export default function WallpaperCustomizer({ product, onClose }) {
             </div>
 
             {/* Form Card Box */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm space-y-5">
+            <div className="bg-amber-50/40 border border-amber-200/80 rounded-2xl p-6 shadow-xs space-y-5">
 
               <h2 className="text-lg font-bold text-slate-900 tracking-tight">
                 Choose Material & Enter Wall Size.
@@ -150,7 +152,7 @@ export default function WallpaperCustomizer({ product, onClose }) {
                     const found = PAPER_OPTIONS.find(p => p.id === e.target.value);
                     if (found) setSelectedPaper(found);
                   }}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  className="w-full bg-white border border-amber-200/80 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
                 >
                   {PAPER_OPTIONS.map((paper) => (
                     <option key={paper.id} value={paper.id}>
@@ -162,24 +164,26 @@ export default function WallpaperCustomizer({ product, onClose }) {
 
               {/* Unit Selector Buttons: Inches / CM */}
               <div>
-                <div className="inline-flex bg-white rounded-lg border border-slate-200 p-0.5">
+                <div className="inline-flex bg-white rounded-xl border border-amber-200/80 p-1">
                   <button
                     type="button"
                     onClick={() => setUnit('Inches')}
-                    className={`px-5 py-1.5 text-xs font-bold rounded-md transition ${unit === 'Inches'
-                        ? 'bg-black text-white shadow-xs'
-                        : 'bg-white text-slate-700 hover:text-slate-900'
-                      }`}
+                    className={`px-5 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                      unit === 'Inches'
+                        ? 'bg-amber-700 text-white shadow-xs'
+                        : 'bg-white text-slate-700 hover:text-amber-900'
+                    }`}
                   >
                     Inches
                   </button>
                   <button
                     type="button"
                     onClick={() => setUnit('CM')}
-                    className={`px-5 py-1.5 text-xs font-bold rounded-md transition ${unit === 'CM'
-                        ? 'bg-black text-white shadow-xs'
-                        : 'bg-white text-slate-700 hover:text-slate-900'
-                      }`}
+                    className={`px-5 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                      unit === 'CM'
+                        ? 'bg-amber-700 text-white shadow-xs'
+                        : 'bg-white text-slate-700 hover:text-amber-900'
+                    }`}
                   >
                     CM
                   </button>
@@ -198,7 +202,7 @@ export default function WallpaperCustomizer({ product, onClose }) {
                     placeholder="Width"
                     value={width}
                     onChange={(e) => setWidth(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    className="w-full bg-white border border-amber-200/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-700"
                   />
                 </div>
 
@@ -212,7 +216,7 @@ export default function WallpaperCustomizer({ product, onClose }) {
                     placeholder="Height"
                     value={height}
                     onChange={(e) => setHeight(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    className="w-full bg-white border border-amber-200/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-700"
                   />
                 </div>
               </div>
@@ -223,7 +227,7 @@ export default function WallpaperCustomizer({ product, onClose }) {
                   Total Area: <span className="font-bold">{roundedSqFt} Sq. Ft.</span>
                 </div>
                 <div className="text-lg font-bold text-slate-900">
-                  Total Price: <span className="text-xl">₹{totalCost.toLocaleString('en-IN')}</span>
+                  Total Price: <span className="text-xl text-amber-950 font-serif font-extrabold">₹{totalCost.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
@@ -232,10 +236,11 @@ export default function WallpaperCustomizer({ product, onClose }) {
                 type="button"
                 onClick={handleAddToCart}
                 disabled={!hasDimensions}
-                className={`w-full py-3.5 rounded-lg text-xs font-bold tracking-widest uppercase transition ${hasDimensions
-                    ? 'bg-black hover:bg-slate-800 text-white shadow-md cursor-pointer'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  }`}
+                className={`w-full py-3.5 rounded-xl text-xs font-bold tracking-widest uppercase transition ${
+                  hasDimensions
+                    ? 'bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 hover:from-amber-800 hover:to-amber-950 text-white shadow-md cursor-pointer'
+                    : 'bg-amber-100 text-amber-800/50 cursor-not-allowed'
+                }`}
               >
                 {hasDimensions ? 'ADD TO CART' : 'ENTER DIMENSIONS'}
               </button>

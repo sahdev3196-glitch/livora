@@ -165,7 +165,7 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
           >
             <ShoppingBag className="w-5 h-5 stroke-[1.5]" />
             {totalCartCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-slate-900 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-700 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs">
                 {totalCartCount}
               </span>
             )}
@@ -302,17 +302,17 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
 
       {/* Slide-Over Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/70 backdrop-blur-sm flex justify-start animate-fade-in md:hidden">
-          <div className="bg-white max-w-xs w-full h-full shadow-2xl flex flex-col justify-between overflow-y-auto">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-amber-950/30 backdrop-blur-md flex justify-start animate-fade-in md:hidden">
+          <div className="bg-white max-w-xs w-full h-full shadow-2xl flex flex-col justify-between overflow-y-auto border-r border-amber-200/60">
             
             {/* Drawer Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+            <div className="p-5 border-b border-amber-200/60 flex items-center justify-between bg-amber-50/40">
               <span className="font-serif text-2xl font-light tracking-[0.2em] text-slate-900">
                 LIVORA
               </span>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 rounded-full text-slate-400 hover:text-slate-800 hover:bg-slate-200 transition cursor-pointer"
+                className="p-1.5 rounded-full text-slate-400 hover:text-amber-900 hover:bg-amber-100/60 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -384,7 +384,7 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
             </div>
 
             {/* Drawer Account Footer */}
-            <div className="p-5 border-t border-slate-100 bg-slate-50">
+            <div className="p-5 border-t border-amber-200/60 bg-amber-50/40">
               {user ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -405,7 +405,7 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                       setMobileMenuOpen(false);
                       if (onOpenOrders) onOpenOrders();
                     }}
-                    className="w-full text-center py-2 bg-[#1a1615] text-amber-100 text-xs font-bold rounded-xl transition mt-2 cursor-pointer shadow-sm"
+                    className="w-full text-center py-2 bg-gradient-to-r from-amber-800 to-amber-900 text-white text-xs font-bold rounded-xl transition mt-2 cursor-pointer shadow-sm"
                   >
                     My Orders & Tracking
                   </button>
@@ -414,7 +414,7 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                       setMobileMenuOpen(false);
                       if (onOpenProfile) onOpenProfile();
                     }}
-                    className="w-full text-center py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition mt-1 cursor-pointer"
+                    className="w-full text-center py-2 bg-white border border-amber-200 hover:bg-amber-50 text-amber-900 text-xs font-bold rounded-xl transition mt-1 cursor-pointer"
                   >
                     My Profile & Address
                   </button>
@@ -425,7 +425,7 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                     setMobileMenuOpen(false);
                     setIsAuthOpen(true);
                   }}
-                  className="w-full text-center py-2.5 bg-slate-950 text-white text-xs font-bold rounded-xl shadow-sm hover:bg-amber-900 transition cursor-pointer"
+                  className="w-full text-center py-2.5 bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 hover:from-amber-800 hover:to-amber-950 text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer"
                 >
                   Sign In / Register
                 </button>

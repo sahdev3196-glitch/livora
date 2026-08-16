@@ -51,23 +51,23 @@ export default function UserProfileModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 relative">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-amber-950/30 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-amber-200/60 relative">
         
         {/* Header */}
-        <div className="bg-[#1a1615] text-amber-50 p-6 flex items-center justify-between border-b border-amber-900/30">
+        <div className="bg-gradient-to-r from-amber-800 to-amber-900 text-white p-6 flex items-center justify-between border-b border-amber-900/30">
           <div>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-amber-400" />
+              <ShieldCheck className="w-5 h-5 text-amber-300" />
               <h2 className="font-serif text-xl font-bold text-white">My Profile & Saved Address</h2>
             </div>
-            <p className="text-xs text-amber-200/70 mt-1 font-light">
+            <p className="text-xs text-amber-100/90 mt-1 font-light">
               Your details are securely stored in LIVORA database for faster order checkout
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            className="p-1.5 rounded-full text-amber-100 hover:text-white hover:bg-amber-950/40 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -93,9 +93,9 @@ export default function UserProfileModal({ isOpen, onClose }) {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
+                  className="w-full pl-9 pr-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
                 />
-                <User className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <User className="w-3.5 h-3.5 text-amber-700 absolute left-3 top-2.5" />
               </div>
             </div>
 
@@ -122,9 +122,9 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 placeholder="+91 98765 43210"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
+                className="w-full pl-9 pr-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
               />
-              <Phone className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              <Phone className="w-3.5 h-3.5 text-amber-700 absolute left-3 top-2.5" />
             </div>
           </div>
 
@@ -137,9 +137,9 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 placeholder="e.g. Flat 402, Royal Palms, MG Road"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
+                className="w-full pl-9 pr-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
               />
-              <MapPin className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              <MapPin className="w-3.5 h-3.5 text-amber-700 absolute left-3 top-2.5" />
             </div>
           </div>
 
@@ -152,7 +152,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 placeholder="City"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
+                className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
               />
             </div>
 
@@ -163,7 +163,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 placeholder="State"
                 value={state}
                 onChange={(e) => setState(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
+                className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
               />
             </div>
 
@@ -174,7 +174,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 placeholder="Pincode"
                 value={pincode}
                 onChange={(e) => setPincode(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
+                className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-700"
               />
             </div>
           </div>
@@ -183,9 +183,9 @@ export default function UserProfileModal({ isOpen, onClose }) {
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-slate-950 hover:bg-amber-900 text-amber-50 font-bold py-3 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-2 mt-4 cursor-pointer"
+            className="w-full bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 hover:from-amber-800 hover:to-amber-950 text-white font-bold py-3 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-2 mt-4 cursor-pointer"
           >
-            <Save className="w-4 h-4 text-amber-400" />
+            <Save className="w-4 h-4 text-amber-200" />
             <span>{saving ? 'Saving to Database...' : 'Save Profile & Address'}</span>
           </button>
 

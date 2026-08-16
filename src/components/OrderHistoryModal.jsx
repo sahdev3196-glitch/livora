@@ -43,31 +43,31 @@ export default function OrderHistoryModal({ isOpen, onClose }) {
   if (!isOpen || !user) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-4xl w-full overflow-hidden shadow-2xl border border-slate-200 relative max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-amber-950/30 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+      <div className="bg-white rounded-3xl max-w-4xl w-full overflow-hidden shadow-2xl border border-amber-200/60 relative max-h-[90vh] flex flex-col">
         
         {/* Top Header */}
-        <div className="bg-[#1a1615] text-amber-50 p-5 sm:p-6 flex items-center justify-between border-b border-amber-900/30 shrink-0">
+        <div className="bg-gradient-to-r from-amber-800 to-amber-900 text-white p-5 sm:p-6 flex items-center justify-between border-b border-amber-900/30 shrink-0">
           <div>
             <div className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-amber-400" />
+              <Package className="w-5 h-5 text-amber-300" />
               <h2 className="font-serif text-xl font-bold text-white">My Orders & Tracking</h2>
             </div>
-            <p className="text-xs text-amber-200/70 mt-1 font-light">
+            <p className="text-xs text-amber-100/90 mt-1 font-light">
               Order history & live custom wallpaper production status for <strong className="text-white">{user.email}</strong>
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={fetchUserOrders}
-              className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="p-2 rounded-full text-amber-100 hover:text-white hover:bg-amber-950/40 transition cursor-pointer"
               title="Refresh Orders"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="p-2 rounded-full text-amber-100 hover:text-white hover:bg-amber-950/40 transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -89,10 +89,10 @@ export default function OrderHistoryModal({ isOpen, onClose }) {
                 <p>Loading your orders...</p>
               </div>
             ) : orders.length === 0 ? (
-              <div className="p-8 bg-slate-50 rounded-2xl text-center border border-dashed border-slate-200 space-y-3">
-                <Package className="w-8 h-8 text-slate-300 mx-auto" />
-                <p className="text-xs text-slate-600 font-semibold">No orders placed yet</p>
-                <p className="text-[11px] text-slate-400">Your custom wallpaper orders will appear here after checkout.</p>
+              <div className="p-8 bg-amber-50/40 rounded-2xl text-center border border-dashed border-amber-200 space-y-3">
+                <Package className="w-8 h-8 text-amber-700 mx-auto" />
+                <p className="text-xs text-slate-700 font-semibold">No orders placed yet</p>
+                <p className="text-[11px] text-slate-500">Your custom wallpaper orders will appear here after checkout.</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
@@ -103,7 +103,7 @@ export default function OrderHistoryModal({ isOpen, onClose }) {
                     className={`w-full text-left p-3.5 rounded-2xl border transition duration-200 flex items-center justify-between cursor-pointer ${
                       selectedOrder?.id === ord.id
                         ? 'bg-amber-50/80 border-amber-800/40 shadow-sm ring-1 ring-amber-700/20'
-                        : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                        : 'bg-white border-amber-200/60 hover:border-amber-400 hover:bg-amber-50/30'
                     }`}
                   >
                     <div>
@@ -116,7 +116,7 @@ export default function OrderHistoryModal({ isOpen, onClose }) {
                       <p className="text-[11px] text-slate-500 mt-1">
                         {new Date(ord.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </p>
-                      <p className="text-xs font-bold text-slate-900 mt-1">₹{ord.totalAmount?.toLocaleString('en-IN')}</p>
+                      <p className="text-xs font-bold text-amber-950 mt-1">₹{ord.totalAmount?.toLocaleString('en-IN')}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-slate-400" />
                   </button>
@@ -127,20 +127,20 @@ export default function OrderHistoryModal({ isOpen, onClose }) {
 
           {/* Right Selected Order Details */}
           {selectedOrder ? (
-            <div className="flex-1 bg-slate-50/60 rounded-2xl p-5 border border-slate-200/80 space-y-6">
+            <div className="flex-1 bg-amber-50/30 rounded-2xl p-5 border border-amber-200/70 space-y-6">
               
               {/* Order Overview Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-amber-200/60">
                 <div>
-                  <span className="text-[11px] text-slate-400 font-bold uppercase block">Order ID</span>
+                  <span className="text-[11px] text-slate-500 font-bold uppercase block">Order ID</span>
                   <h3 className="text-lg font-extrabold text-slate-900">{selectedOrder.id}</h3>
                   <p className="text-xs text-slate-500">
                     Placed on {new Date(selectedOrder.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-[11px] text-slate-400 font-bold uppercase block">Tracking No.</span>
-                  <p className="text-xs font-mono font-bold text-amber-900 bg-amber-100/80 px-2.5 py-1 rounded-lg inline-block">
+                  <span className="text-[11px] text-slate-500 font-bold uppercase block">Tracking No.</span>
+                  <p className="text-xs font-mono font-bold text-amber-900 bg-amber-100/80 border border-amber-200 px-2.5 py-1 rounded-lg inline-block">
                     {selectedOrder.trackingNumber || 'BLUEDART-849201'}
                   </p>
                 </div>
@@ -191,19 +191,19 @@ export default function OrderHistoryModal({ isOpen, onClose }) {
                 <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Ordered Wallpapers ({selectedOrder.items?.length || 0})</h4>
                 <div className="space-y-3">
                   {selectedOrder.items?.map((item, idx) => (
-                    <div key={idx} className="bg-white p-3.5 rounded-xl border border-slate-200 flex items-center gap-3.5">
+                    <div key={idx} className="bg-white p-3.5 rounded-xl border border-amber-200/60 flex items-center gap-3.5">
                       <img src={item.image} alt={item.title} className="w-16 h-16 rounded-lg object-cover shrink-0 border border-slate-200" />
                       <div className="flex-1">
                         <h5 className="text-xs font-bold text-slate-900 line-clamp-1">{item.title}</h5>
                         <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
                           Size: {item.widthFt || item.customWidth}ft × {item.heightFt || item.customHeight}ft ({item.sqFt || 100} sq.ft)
                         </p>
-                        <p className="text-[10px] text-amber-800 font-bold bg-amber-50 px-1.5 py-0.5 rounded inline-block mt-1">
+                        <p className="text-[10px] text-amber-800 font-bold bg-amber-50 border border-amber-200/50 px-1.5 py-0.5 rounded inline-block mt-1">
                           Material: {item.material || 'Non-Woven Premium Textured'}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs font-extrabold text-slate-900">₹{(item.totalPrice || item.startingPrice * 100 || 8900).toLocaleString('en-IN')}</p>
+                        <p className="text-xs font-extrabold text-amber-950">₹{(item.totalPrice || item.startingPrice * 100 || 8900).toLocaleString('en-IN')}</p>
                         <p className="text-[10px] text-slate-400 font-medium">Qty: {item.quantity || 1}</p>
                       </div>
                     </div>
@@ -212,7 +212,7 @@ export default function OrderHistoryModal({ isOpen, onClose }) {
               </div>
 
               {/* Shipping Address & Download Invoice */}
-              <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-900/10 flex items-center justify-between">
+              <div className="bg-amber-100/50 p-4 rounded-xl border border-amber-200 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-bold text-amber-900 uppercase block">Shipping Address</span>
                   <p className="text-xs text-slate-700 font-medium mt-0.5">
@@ -221,9 +221,9 @@ export default function OrderHistoryModal({ isOpen, onClose }) {
                 </div>
                 <button
                   onClick={() => window.print()}
-                  className="bg-slate-950 hover:bg-amber-900 text-amber-50 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  className="bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
                 >
-                  <Download className="w-3.5 h-3.5" />
+                  <Download className="w-3.5 h-3.5 text-amber-200" />
                   <span>Invoice</span>
                 </button>
               </div>

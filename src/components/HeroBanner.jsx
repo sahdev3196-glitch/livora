@@ -37,7 +37,6 @@ const HERO_SLIDES = [
 export default function HeroBanner() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Auto-play carousel: changes wallpaper image every 3 seconds
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % HERO_SLIDES.length);
@@ -55,9 +54,9 @@ export default function HeroBanner() {
   };
 
   return (
-    <section className="relative w-full h-[65vh] sm:h-[85vh] bg-slate-950 overflow-hidden group">
+    <section className="relative w-full h-[65vh] sm:h-[85vh] bg-[#faf8f5] overflow-hidden group">
 
-      {/* Edge-to-Edge Full Width Wallpaper Carousel */}
+      {/* Carousel Image Items */}
       {HERO_SLIDES.map((slide, index) => (
         <div
           key={slide.id}
@@ -73,10 +72,10 @@ export default function HeroBanner() {
         </div>
       ))}
 
-      {/* Discreet Manual Navigation Controls (Left/Right Arrows) */}
+      {/* Manual Navigation Controls (Light Glassmorphic Arrows) */}
       <button
         onClick={goToPrev}
-        className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-30 p-2.5 sm:p-3 rounded-full bg-black/40 hover:bg-white/90 text-white hover:text-slate-900 backdrop-blur-md transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-lg"
+        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 p-3 sm:p-3.5 rounded-full bg-white/80 hover:bg-white text-slate-800 hover:text-amber-900 backdrop-blur-md transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-xl border border-amber-900/10 cursor-pointer"
         title="Previous Wallpaper"
       >
         <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -84,20 +83,20 @@ export default function HeroBanner() {
 
       <button
         onClick={goToNext}
-        className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-30 p-2.5 sm:p-3 rounded-full bg-black/40 hover:bg-white/90 text-white hover:text-slate-900 backdrop-blur-md transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-lg"
+        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 p-3 sm:p-3.5 rounded-full bg-white/80 hover:bg-white text-slate-800 hover:text-amber-900 backdrop-blur-md transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-xl border border-amber-900/10 cursor-pointer"
         title="Next Wallpaper"
       >
         <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
 
-      {/* Subtle Slide Indicators at the Very Bottom Center */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
+      {/* Slide Indicators Bar (Light Glass Theme) */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-white/85 backdrop-blur-md px-4 py-2 rounded-full border border-amber-900/10 shadow-lg">
         {HERO_SLIDES.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setCurrentIndex(idx)}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              idx === currentIndex ? 'w-8 bg-amber-400' : 'w-2 bg-white/50 hover:bg-white'
+            className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+              idx === currentIndex ? 'w-8 bg-amber-700' : 'w-2 bg-amber-900/30 hover:bg-amber-800'
             }`}
             title={`Go to slide ${idx + 1}`}
           />

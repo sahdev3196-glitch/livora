@@ -8,19 +8,19 @@ export default function OrderSuccessModal() {
   if (!orderSuccess) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-white/50 text-center p-6 space-y-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-amber-950/30 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-amber-200/60 text-center p-6 space-y-6">
         
         {/* Animated Check */}
-        <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+        <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner border border-emerald-200">
           <CheckCircle2 className="w-12 h-12" />
         </div>
 
         <div>
-          <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-900 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+          <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-900 rounded-full text-xs font-bold uppercase tracking-wider mb-2 border border-amber-300">
             <Sparkles className="w-3.5 h-3.5" /> Payment Successful
           </span>
-          <h2 className="text-2xl font-serif font-bold text-slate-950">
+          <h2 className="text-2xl font-serif font-bold text-slate-900">
             Thank You For Ordering!
           </h2>
           <p className="text-xs text-slate-500 mt-1">
@@ -29,14 +29,14 @@ export default function OrderSuccessModal() {
         </div>
 
         {/* Order Details Card */}
-        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-left space-y-2 text-xs">
+        <div className="bg-amber-50/50 rounded-2xl p-4 border border-amber-200/80 text-left space-y-2 text-xs">
           <div className="flex justify-between">
             <span className="text-slate-500">Order ID:</span>
             <span className="font-bold text-amber-900">{orderSuccess.id}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">Total Paid:</span>
-            <span className="font-extrabold text-slate-900">₹{orderSuccess.totalAmount?.toLocaleString('en-IN')}</span>
+            <span className="font-extrabold text-amber-950 font-serif">₹{orderSuccess.totalAmount?.toLocaleString('en-IN')}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">Estimated Delivery:</span>
@@ -48,7 +48,7 @@ export default function OrderSuccessModal() {
         <div className="space-y-2">
           <button
             onClick={() => setOrderSuccess(null)}
-            className="w-full bg-slate-950 hover:bg-amber-900 text-amber-50 font-bold py-3 rounded-xl shadow-lg transition"
+            className="w-full bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 hover:from-amber-800 hover:to-amber-950 text-white font-bold py-3.5 rounded-xl shadow-lg transition cursor-pointer"
           >
             Continue Shopping
           </button>

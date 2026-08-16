@@ -65,18 +65,18 @@ export default function CheckoutModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-white/50 relative">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-amber-950/30 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-amber-200/60 relative">
         
         {/* Header */}
-        <div className="bg-[#1a1615] text-amber-50 p-6 flex items-center justify-between border-b border-amber-900/30">
+        <div className="bg-gradient-to-r from-amber-800 to-amber-900 text-white p-6 flex items-center justify-between border-b border-amber-900/30">
           <div>
-            <span className="text-xs font-bold text-amber-400 uppercase tracking-widest block">LIVORA Payment Gateway</span>
+            <span className="text-xs font-bold text-amber-200 uppercase tracking-widest block">LIVORA Payment Gateway</span>
             <h2 className="font-serif font-bold text-xl text-white">Collect Online Payment & Confirm Order</h2>
           </div>
           <button
             onClick={() => setIsCheckoutOpen(false)}
-            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-full text-amber-100 hover:text-white hover:bg-amber-950/40 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -97,7 +97,7 @@ export default function CheckoutModal() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
+                  className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
                 />
               </div>
 
@@ -109,7 +109,7 @@ export default function CheckoutModal() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 9876543210"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
+                  className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
                 />
               </div>
             </div>
@@ -122,7 +122,7 @@ export default function CheckoutModal() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="customer@example.com"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
+                className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
               />
             </div>
 
@@ -134,7 +134,7 @@ export default function CheckoutModal() {
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="House No, Street, Apartment / Landmark"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
+                className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
               />
             </div>
 
@@ -147,7 +147,7 @@ export default function CheckoutModal() {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="e.g. Mumbai / Delhi"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
+                  className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
                 />
               </div>
               <div>
@@ -158,14 +158,14 @@ export default function CheckoutModal() {
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value)}
                   placeholder="400001"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
+                  className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200/80 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-700 focus:outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Payment Method Selection */}
-          <div className="space-y-3 pt-4 border-t border-slate-100">
+          <div className="space-y-3 pt-4 border-t border-amber-200/60">
             <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">2. Choose Payment Option</h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -212,16 +212,16 @@ export default function CheckoutModal() {
           </div>
 
           {/* Pay Button */}
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
+          <div className="pt-4 border-t border-amber-200/60 flex items-center justify-between">
             <div>
               <span className="text-[10px] text-slate-500 uppercase font-semibold block">Total Amount to Pay</span>
-              <span className="text-2xl font-extrabold text-amber-900">₹{subtotal.toLocaleString('en-IN')}</span>
+              <span className="text-2xl font-extrabold text-amber-950 font-serif">₹{subtotal.toLocaleString('en-IN')}</span>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm px-7 py-3.5 rounded-2xl shadow-xl transition flex items-center gap-2"
+              className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm px-7 py-3.5 rounded-2xl shadow-xl transition flex items-center gap-2 cursor-pointer"
             >
               <Lock className="w-4 h-4" />
               <span>{loading ? 'Processing Payment...' : `Pay ₹${subtotal.toLocaleString('en-IN')} Now`}</span>
