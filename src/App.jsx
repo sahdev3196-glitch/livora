@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
+import { LocationProvider } from './context/LocationContext';
 import Header from './components/Header';
 import HeroBanner from './components/HeroBanner';
 import ShopByThemes from './components/ShopByThemes';
@@ -11,6 +12,7 @@ import WallpaperCustomizer from './components/WallpaperCustomizer';
 import ProductDetailPage from './components/ProductDetailPage';
 import ReelsShowcase from './components/ReelsShowcase';
 import AuthModal from './components/AuthModal';
+import LocationPermissionModal from './components/LocationPermissionModal';
 import CartPage from './components/CartPage';
 import CheckoutPage from './components/CheckoutPage';
 import OrdersPage from './components/OrdersPage';
@@ -331,7 +333,10 @@ export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <MainCatalogRoutes />
+        <LocationProvider>
+          <MainCatalogRoutes />
+          <LocationPermissionModal />
+        </LocationProvider>
       </CartProvider>
     </AuthProvider>
   );

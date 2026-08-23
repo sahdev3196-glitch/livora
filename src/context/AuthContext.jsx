@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { signInWithGoogleFirebase } from '../firebase';
+import { 
+  signInWithGoogleFirebase, 
+  setupRecaptcha, 
+  sendFirebasePhoneOtp, 
+  verifyFirebasePhoneOtp 
+} from '../firebase';
 
 const AuthContext = createContext();
 
@@ -7,8 +12,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('livora_token') || null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [authTab, setAuthTab] = useState('login'); // 'login' or 'signup'
+  const [authTab, setAuthTab] = useState('login'); // 'login', 'signup', or 'phone'
   const [loading, setLoading] = useState(false);
+  const [phoneConfirmation, setPhoneConfirmation] = useState(null);
 
   const openAuth = (tab = 'login') => {
     setAuthTab(tab);
@@ -109,7 +115,6 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (err) {
       console.error("Google Auth error:", err);
-      // Fallback user profile if popup is closed or blocked by browser
       const fallbackUser = {
         id: 'usr_g_' + Date.now(),
         name: 'Google User',
@@ -123,6 +128,55 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('livora_user', JSON.stringify(fallbackUser));
       setIsAuthOpen(false);
       return { success: true };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Request Phone SMS OTP via Firebase
+  const requestPhoneOtp = async (phoneNumber, containerId = 'recaptcha-container') => {
+    setLoading(true);
+    try {
+      const verifier = setupRecaptcha(containerId);
+      const res = await sendFirebasePhoneOtp(phoneNumber, verifier);
+      if (res.success) {
+        setPhoneConfirmation(res.confirmationResult);
+        return { success: true };
+      } else {
+        return { success: false, error: res.error };
+      }
+    } catch (err) {
+      console.error("requestPhoneOtp error:", err);
+      return { success: false, error: err.message || "Failed to send Phone OTP" };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Confirm Phone SMS OTP code
+  const confirmPhoneOtp = async (otpCode) => {
+    if (!phoneConfirmation) {
+      return { success: false, error: "Please request an OTP first." };
+    }
+    setLoading(true);
+    try {
+      const res = await verifyFirebasePhoneOtp(phoneConfirmation, otpCode);
+      if (res.success) {
+        const phoneUser = res.user;
+        const phoneToken = 'phone_jwt_' + Date.now();
+        setUser(phoneUser);
+        setToken(phoneToken);
+        localStorage.setItem('livora_token', phoneToken);
+        localStorage.setItem('livora_user', JSON.stringify(phoneUser));
+        setIsAuthOpen(false);
+        setPhoneConfirmation(null);
+        return { success: true };
+      } else {
+        return { success: false, error: res.error };
+      }
+    } catch (err) {
+      console.error("confirmPhoneOtp error:", err);
+      return { success: false, error: err.message || "Invalid OTP" };
     } finally {
       setLoading(false);
     }
@@ -157,6 +211,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setToken(null);
+    setPhoneConfirmation(null);
     localStorage.removeItem('livora_token');
     localStorage.removeItem('livora_user');
   };
@@ -174,6 +229,10 @@ export const AuthProvider = ({ children }) => {
         login,
         signup,
         googleLogin,
+        requestPhoneOtp,
+        confirmPhoneOtp,
+        phoneConfirmation,
+        setPhoneConfirmation,
         updateUserProfile,
         logout,
         loading

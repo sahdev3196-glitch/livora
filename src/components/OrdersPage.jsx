@@ -197,9 +197,9 @@ export default function OrdersPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider block">BlueDart Tracking</span>
+                    <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider block">Express Tracking</span>
                     <p className="text-xs font-mono font-bold text-sky-900 bg-sky-50 border border-sky-200 px-3 py-1 rounded-xl inline-block mt-0.5">
-                      {selectedOrder.trackingNumber || 'BLUEDART-849201'}
+                      {selectedOrder.trackingNumber || 'LIV-TRK-849201'}
                     </p>
                   </div>
                 </div>

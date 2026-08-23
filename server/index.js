@@ -137,13 +137,65 @@ app.get('/api/user/profile', authenticateToken, (req, res) => {
 });
 
 app.put('/api/user/profile', authenticateToken, (req, res) => {
-  const { name, phone, address, city, state, pincode } = req.body;
-  const updated = db.updateUser(req.user.email, { name, phone, address, city, state, pincode });
+  const { name, phone, address, city, state, pincode, location } = req.body;
+  const updated = db.updateUser(req.user.email, { name, phone, address, city, state, pincode, location });
   if (updated) {
     const { password, ...userProfile } = updated;
     return res.json({ message: 'Profile updated successfully', user: userProfile });
   }
   res.status(400).json({ error: 'Failed to update profile' });
+});
+
+app.put('/api/user/location', (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    let userEmail = req.body.email;
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        userEmail = decoded.email || userEmail;
+      } catch (e) {
+        // Continue if decoded or email in body
+      }
+    }
+
+    if (!userEmail) {
+      return res.status(400).json({ error: 'User email or authorization token is required to save location' });
+    }
+
+    const { latitude, longitude, city, state, country, pincode, formattedAddress, consent } = req.body;
+    
+    const locationData = {
+      latitude,
+      longitude,
+      city: city || '',
+      state: state || '',
+      country: country || '',
+      pincode: pincode || '',
+      formattedAddress: formattedAddress || '',
+      consent: consent !== undefined ? consent : true,
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedUser = db.updateUser(userEmail, {
+      location: locationData,
+      ...(city ? { city } : {}),
+      ...(state ? { state } : {}),
+      ...(pincode ? { pincode } : {})
+    });
+
+    res.json({
+      success: true,
+      message: 'Location saved to database successfully',
+      location: locationData,
+      user: { id: updatedUser.id, email: updatedUser.email, name: updatedUser.name }
+    });
+  } catch (err) {
+    console.error('Error saving user location:', err);
+    res.status(500).json({ error: 'Failed to save location' });
+  }
 });
 
 app.post('/api/auth/google', (req, res) => {
@@ -319,7 +371,7 @@ app.post('/api/orders', (req, res) => {
       items,
       totalAmount,
       status: 'PAID',
-      trackingNumber: 'BLUEDART-' + Math.floor(10000000 + Math.random() * 90000000),
+      trackingNumber: 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000),
       paymentId: paymentDetails?.paymentId || 'PAY_' + Math.random().toString(36).substr(2, 9),
       razorpayOrderId: paymentDetails?.orderId || ''
     });

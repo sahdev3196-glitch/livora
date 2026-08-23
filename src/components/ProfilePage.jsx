@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Mail, Phone, MapPin, ShieldCheck, Save, CheckCircle, ArrowLeft, ChevronRight } from 'lucide-react';
+import { User, Mail, Phone, MapPin, ShieldCheck, Save, CheckCircle, ArrowLeft, ChevronRight, Navigation } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useUserLocation } from '../context/LocationContext';
 import Header from './Header';
 import Footer from './Footer';
 
 export default function ProfilePage() {
   const { user, updateUserProfile, setIsAuthOpen } = useAuth();
+  const { userLocation, requestLocation, loading: geoLoading } = useUserLocation();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -24,11 +26,15 @@ export default function ProfilePage() {
       setEmail(user.email || '');
       setPhone(user.phone || '');
       setAddress(user.address || '');
-      setCity(user.city || '');
-      setState(user.state || '');
-      setPincode(user.pincode || '');
+      setCity(user.city || userLocation?.city || '');
+      setState(user.state || userLocation?.state || '');
+      setPincode(user.pincode || userLocation?.pincode || '');
+    } else if (userLocation) {
+      setCity(userLocation.city || '');
+      setState(userLocation.state || '');
+      setPincode(userLocation.pincode || '');
     }
-  }, [user]);
+  }, [user, userLocation]);
 
   const handleSave = async (e) => {
     e.preventDefault();
