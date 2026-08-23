@@ -18,6 +18,26 @@
       "city": "Mumbai",
       "state": "Maharashtra",
       "pincode": "400001"
+    },
+    {
+      "id": "1787483844889",
+      "createdAt": "2026-08-23T11:17:24.889Z",
+      "email": "shriram7927@gmail.com",
+      "location": {
+        "latitude": 18.507782674388228,
+        "longitude": 73.86563919602162,
+        "city": "Pune",
+        "state": "Maharashtra",
+        "country": "India",
+        "pincode": "411001",
+        "formattedAddress": "",
+        "consent": true,
+        "updatedAt": "2026-08-23T11:21:27.668Z"
+      },
+      "city": "Pune",
+      "state": "Maharashtra",
+      "pincode": "411001",
+      "updatedAt": "2026-08-23T11:21:27.668Z"
     }
   ],
   "orders": [
