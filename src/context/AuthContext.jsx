@@ -1,10 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  signInWithGoogleFirebase, 
-  setupRecaptcha, 
-  sendFirebasePhoneOtp, 
-  verifyFirebasePhoneOtp 
-} from '../firebase';
+import { signInWithGoogleFirebase } from '../firebase';
 
 const AuthContext = createContext();
 
@@ -12,12 +7,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('livora_token') || null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [authTab, setAuthTab] = useState('login'); // 'login', 'signup', or 'phone'
   const [loading, setLoading] = useState(false);
-  const [phoneConfirmation, setPhoneConfirmation] = useState(null);
 
-  const openAuth = (tab = 'login') => {
-    setAuthTab(tab);
+  const openAuth = () => {
     setIsAuthOpen(true);
   };
 
@@ -32,73 +24,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  const login = async (email, password) => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed');
-
-      setUser(data.user);
-      setToken(data.token);
-      localStorage.setItem('livora_token', data.token);
-      localStorage.setItem('livora_user', JSON.stringify(data.user));
-      setIsAuthOpen(false);
-      return { success: true };
-    } catch (err) {
-      // Local fallback if server unreachable
-      const dummyUser = { id: 'usr_' + Date.now(), name: email.split('@')[0], email };
-      const dummyToken = 'mock_jwt_' + Date.now();
-      setUser(dummyUser);
-      setToken(dummyToken);
-      localStorage.setItem('livora_token', dummyToken);
-      localStorage.setItem('livora_user', JSON.stringify(dummyUser));
-      setIsAuthOpen(false);
-      return { success: true };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signup = async (name, email, password, phone) => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, phone })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Signup failed');
-
-      setUser(data.user);
-      setToken(data.token);
-      localStorage.setItem('livora_token', data.token);
-      localStorage.setItem('livora_user', JSON.stringify(data.user));
-      setIsAuthOpen(false);
-      return { success: true };
-    } catch (err) {
-      const dummyUser = { id: 'usr_' + Date.now(), name, email, phone };
-      const dummyToken = 'mock_jwt_' + Date.now();
-      setUser(dummyUser);
-      setToken(dummyToken);
-      localStorage.setItem('livora_token', dummyToken);
-      localStorage.setItem('livora_user', JSON.stringify(dummyUser));
-      setIsAuthOpen(false);
-      return { success: true };
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const googleLogin = async () => {
     setLoading(true);
     try {
-      // Trigger official Firebase Google Popup Login
       const firebaseRes = await signInWithGoogleFirebase();
       if (!firebaseRes.success) {
         throw new Error(firebaseRes.error || 'Google Sign-In failed');
@@ -133,55 +61,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Request Phone SMS OTP via Firebase
-  const requestPhoneOtp = async (phoneNumber, containerId = 'recaptcha-container') => {
-    setLoading(true);
-    try {
-      const verifier = setupRecaptcha(containerId);
-      const res = await sendFirebasePhoneOtp(phoneNumber, verifier);
-      if (res.success) {
-        setPhoneConfirmation(res.confirmationResult);
-        return { success: true };
-      } else {
-        return { success: false, error: res.error };
-      }
-    } catch (err) {
-      console.error("requestPhoneOtp error:", err);
-      return { success: false, error: err.message || "Failed to send Phone OTP" };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Confirm Phone SMS OTP code
-  const confirmPhoneOtp = async (otpCode) => {
-    if (!phoneConfirmation) {
-      return { success: false, error: "Please request an OTP first." };
-    }
-    setLoading(true);
-    try {
-      const res = await verifyFirebasePhoneOtp(phoneConfirmation, otpCode);
-      if (res.success) {
-        const phoneUser = res.user;
-        const phoneToken = 'phone_jwt_' + Date.now();
-        setUser(phoneUser);
-        setToken(phoneToken);
-        localStorage.setItem('livora_token', phoneToken);
-        localStorage.setItem('livora_user', JSON.stringify(phoneUser));
-        setIsAuthOpen(false);
-        setPhoneConfirmation(null);
-        return { success: true };
-      } else {
-        return { success: false, error: res.error };
-      }
-    } catch (err) {
-      console.error("confirmPhoneOtp error:", err);
-      return { success: false, error: err.message || "Invalid OTP" };
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const updateUserProfile = async (profileData) => {
     try {
       const res = await fetch('/api/user/profile', {
@@ -211,7 +90,6 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setToken(null);
-    setPhoneConfirmation(null);
     localStorage.removeItem('livora_token');
     localStorage.removeItem('livora_user');
   };
@@ -223,16 +101,8 @@ export const AuthProvider = ({ children }) => {
         token,
         isAuthOpen,
         setIsAuthOpen,
-        authTab,
-        setAuthTab,
         openAuth,
-        login,
-        signup,
         googleLogin,
-        requestPhoneOtp,
-        confirmPhoneOtp,
-        phoneConfirmation,
-        setPhoneConfirmation,
         updateUserProfile,
         logout,
         loading

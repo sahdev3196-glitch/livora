@@ -31,6 +31,8 @@ export default function ShopByRoom({ activeRoom }) {
                   <img
                     src={room.img}
                     alt={room.name}
+                    loading="lazy"
+                    decoding="async"
                     onError={(e) => {
                       e.target.src = `${import.meta.env.BASE_URL}crsl.webp`;
                     }}

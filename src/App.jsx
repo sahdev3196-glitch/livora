@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
@@ -8,22 +8,32 @@ import HeroBanner from './components/HeroBanner';
 import ShopByThemes from './components/ShopByThemes';
 import ShopByRoom from './components/ShopByRoom';
 import ProductCard from './components/ProductCard';
-import WallpaperCustomizer from './components/WallpaperCustomizer';
-import ProductDetailPage from './components/ProductDetailPage';
 import ReelsShowcase from './components/ReelsShowcase';
 import AuthModal from './components/AuthModal';
 import LocationPermissionModal from './components/LocationPermissionModal';
-import CartPage from './components/CartPage';
-import CheckoutPage from './components/CheckoutPage';
-import OrdersPage from './components/OrdersPage';
-import ProfilePage from './components/ProfilePage';
 import OrderSuccessModal from './components/OrderSuccessModal';
-import UserProfileModal from './components/UserProfileModal';
-import OrderHistoryModal from './components/OrderHistoryModal';
 import Footer from './components/Footer';
 import { INITIAL_WALLPAPERS, getThemeFromSlug, getRoomFromSlug } from './data/wallpapers';
 import { Sparkles, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 
+// Dynamic Route-Based Code Splitting for Ultra-Fast Initial Page Loads
+const ProductDetailPage = lazy(() => import('./components/ProductDetailPage'));
+const CartPage = lazy(() => import('./components/CartPage'));
+const CheckoutPage = lazy(() => import('./components/CheckoutPage'));
+const OrdersPage = lazy(() => import('./components/OrdersPage'));
+const ProfilePage = lazy(() => import('./components/ProfilePage'));
+
+// Luxury Loading Suspense Fallback
+function PageLoadingSkeleton() {
+  return (
+    <div className="min-h-screen bg-slate-50/50 flex flex-col items-center justify-center p-6 animate-fade-in">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 border-3 border-sky-500 border-t-transparent rounded-full animate-spin" />
+        <span className="font-serif text-lg font-bold tracking-widest text-sky-950">LIVORA</span>
+      </div>
+    </div>
+  );
+}
 
 function CatalogContent() {
   const [products, setProducts] = useState(INITIAL_WALLPAPERS);
@@ -32,7 +42,7 @@ function CatalogContent() {
   
   const location = useLocation();
   const navigate = useNavigate();
-  const { themeSlug, roomSlug, productId } = useParams();
+  const { themeSlug, roomSlug } = useParams();
 
   // Determine current active filter from URL path
   let selectedTheme = 'all';
@@ -69,7 +79,7 @@ function CatalogContent() {
     }
   }, [location.pathname, selectedTheme, selectedRoom]);
 
-  // Products catalog fallback protection
+  // Products catalog fetch with local data fallback
   useEffect(() => {
     fetch('/api/products')
       .then(res => res.json())
@@ -98,8 +108,8 @@ function CatalogContent() {
     const q = (searchQuery || '').toLowerCase().trim();
     const matchesSearch = !q || 
       (p.title && p.title.toLowerCase().includes(q)) || 
-      (p.theme && p.theme.toLowerCase().includes(q)) ||
-      (p.room && p.room.toLowerCase().includes(q)) ||
+      (p.theme && p.theme.toLowerCase().includes(q)) || 
+      (p.room && p.room.toLowerCase().includes(q)) || 
       (p.code && p.code.toLowerCase().includes(q));
 
     return matchesTheme && matchesRoom && matchesSearch;
@@ -135,7 +145,7 @@ function CatalogContent() {
           <HeroBanner onExplore={() => document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' })} />
         )}
 
-        {/* Shop By Themes Bar (Always accessible for easy category switching) */}
+        {/* Shop By Themes Bar */}
         <ShopByThemes activeTheme={selectedTheme} />
 
         {selectedTheme === 'all' && selectedRoom === 'all' && !searchQuery && location.pathname === '/' && (
@@ -180,7 +190,7 @@ function CatalogContent() {
             </div>
           </div>
 
-          {/* Product Grid (4-5 cards per line depending on screen width) */}
+          {/* Product Grid */}
           {paginatedProducts.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 space-y-3">
               <Sparkles className="w-10 h-10 text-emerald-500 mx-auto" />
@@ -202,7 +212,7 @@ function CatalogContent() {
                 ))}
               </div>
 
-              {/* Premium Smart Window Pagination */}
+              {/* Smart Pagination */}
               {totalPages > 1 && (
                 <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-100">
                   <div className="text-xs text-slate-500 font-medium flex items-center gap-2">
@@ -213,7 +223,6 @@ function CatalogContent() {
                   </div>
 
                   <nav className="inline-flex items-center gap-1 sm:gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm" aria-label="Pagination Navigation">
-                    {/* Previous Button */}
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
@@ -228,7 +237,6 @@ function CatalogContent() {
                       <span className="hidden sm:inline">Prev</span>
                     </button>
 
-                    {/* Smart Page Numbers with Ellipses */}
                     {(() => {
                       let pages = [];
                       if (totalPages <= 7) {
@@ -271,7 +279,6 @@ function CatalogContent() {
                       });
                     })()}
 
-                    {/* Next Button */}
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
@@ -298,8 +305,6 @@ function CatalogContent() {
       {/* Footer */}
       <Footer />
 
-
-
       {/* Auth Modal */}
       <AuthModal />
 
@@ -312,20 +317,22 @@ function CatalogContent() {
 
 function MainCatalogRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<CatalogContent />} />
-      <Route path="/cart" element={<CartPage />} />
-      <Route path="/checkout" element={<CheckoutPage />} />
-      <Route path="/product/:productId" element={<ProductDetailPage />} />
-      <Route path="/orders" element={<OrdersPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
-      <Route path="/category/:themeSlug" element={<CatalogContent />} />
-      <Route path="/room/:roomSlug" element={<CatalogContent />} />
-      <Route path="/wishlist" element={<CatalogContent />} />
-      <Route path="/kids-wallpapers" element={<CatalogContent />} />
-      <Route path="/wall-arts" element={<CatalogContent />} />
-      <Route path="*" element={<CatalogContent />} />
-    </Routes>
+    <Suspense fallback={<PageLoadingSkeleton />}>
+      <Routes>
+        <Route path="/" element={<CatalogContent />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/product/:productId" element={<ProductDetailPage />} />
+        <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/category/:themeSlug" element={<CatalogContent />} />
+        <Route path="/room/:roomSlug" element={<CatalogContent />} />
+        <Route path="/wishlist" element={<CatalogContent />} />
+        <Route path="/kids-wallpapers" element={<CatalogContent />} />
+        <Route path="/wall-arts" element={<CatalogContent />} />
+        <Route path="*" element={<CatalogContent />} />
+      </Routes>
+    </Suspense>
   );
 }
 

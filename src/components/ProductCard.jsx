@@ -22,6 +22,8 @@ export default function ProductCard({ product, compact = false }) {
         <img
           src={product.image}
           alt={product.title}
+          loading="lazy"
+          decoding="async"
           onError={(e) => {
             e.target.src = `${import.meta.env.BASE_URL}crsl.webp`;
           }}

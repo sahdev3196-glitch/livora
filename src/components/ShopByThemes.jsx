@@ -39,6 +39,8 @@ export default function ShopByThemes({ activeTheme }) {
                     <img
                       src={theme.img}
                       alt={theme.name}
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => { e.target.src = `${import.meta.env.BASE_URL}crsl.webp`; }}
                       className="w-full h-full object-cover object-top scale-110 rounded-full group-hover:scale-125 transition-transform duration-500"
                     />
