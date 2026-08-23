@@ -1,40 +1,51 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Star, Sparkles, Ruler, ArrowUpRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
-export default function ProductCard({ product }) {
-  const { toggleWishlist, isWishlisted, setActiveCustomizerProduct } = useCart();
+export default function ProductCard({ product, compact = false }) {
+  const { toggleWishlist, isWishlisted } = useCart();
   const wishlisted = isWishlisted(product.id);
+  const navigate = useNavigate();
   const [hasError, setHasError] = useState(false);
 
   if (hasError) return null;
 
   return (
-    <div className="group bg-white rounded-3xl overflow-hidden border border-amber-900/10 hover:border-amber-400/60 transition-all duration-500 hover:shadow-2xl hover:shadow-amber-900/10 flex flex-col justify-between">
+    <div 
+      className="group bg-white rounded-2xl overflow-hidden border border-slate-200/80 hover:border-sky-300 transition-all duration-300 hover:shadow-xl flex flex-col justify-between cursor-pointer relative h-full"
+      onClick={() => navigate(`/product/${product.id}`)}
+    >
       
-      {/* Top Image Box */}
-      <div 
-        className="relative aspect-[4/3] bg-gradient-to-b from-amber-50/60 via-stone-50 to-amber-100/20 overflow-hidden cursor-pointer" 
-        onClick={() => setActiveCustomizerProduct(product)}
-      >
+      {/* Top Image Container (Sleek 4:5 Portrait Ratio) */}
+      <div className="relative aspect-[4/5] bg-slate-50 overflow-hidden">
         <img
           src={product.image}
           alt={product.title}
           onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80';
+            e.target.src = `${import.meta.env.BASE_URL}crsl.webp`;
           }}
-          className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
         />
 
-        {/* Top Badges Bar */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10">
+        {/* Soft Ambient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/5 opacity-50 group-hover:opacity-70 transition-opacity" />
+
+        {/* Top Badges Row */}
+        <div className="absolute top-2 left-2 right-2 flex items-center justify-between z-10">
           {product.badge ? (
-            <span className="bg-amber-700/90 backdrop-blur-md text-amber-50 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm flex items-center gap-1.5 border border-amber-500/30">
-              <Sparkles className="w-3 h-3 text-amber-300 fill-amber-300" />
+            <span className={`bg-white/95 backdrop-blur-md text-sky-900 font-extrabold rounded-full uppercase tracking-wider shadow-xs flex items-center gap-1 border border-sky-200/80 ${
+              compact ? 'text-[9px] px-2 py-0.5' : 'text-[10px] px-2.5 py-0.5'
+            }`}>
+              <Sparkles className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} text-sky-500 fill-sky-500`} />
               {product.badge}
             </span>
           ) : (
-            <div />
+            <span className={`bg-white/90 backdrop-blur-md text-slate-700 font-bold rounded-full uppercase tracking-wider shadow-xs border border-slate-200/60 ${
+              compact ? 'text-[9px] px-2 py-0.5' : 'text-[10px] px-2.5 py-0.5'
+            }`}>
+              {product.theme}
+            </span>
           )}
 
           {/* Wishlist Button */}
@@ -43,75 +54,77 @@ export default function ProductCard({ product }) {
               e.stopPropagation();
               toggleWishlist(product);
             }}
-            className={`pointer-events-auto p-2.5 rounded-full backdrop-blur-md transition-all duration-300 shadow-md cursor-pointer ${
+            className={`rounded-full backdrop-blur-md transition-all duration-300 shadow-xs cursor-pointer ${
+              compact ? 'p-1.5' : 'p-2'
+            } ${
               wishlisted
                 ? 'bg-rose-500 text-white scale-110'
-                : 'bg-white/90 text-slate-600 hover:bg-white hover:text-rose-500 hover:scale-110'
+                : 'bg-white/90 text-slate-600 hover:bg-white hover:text-rose-600 hover:scale-110'
             }`}
             title={wishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
           >
-            <Heart className={`w-4 h-4 ${wishlisted ? 'fill-current' : ''}`} />
+            <Heart className={`${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'} ${wishlisted ? 'fill-current' : ''}`} />
           </button>
         </div>
 
-        {/* Hover Quick Customize Floating Bar */}
-        <div className="absolute bottom-3 left-3 right-3 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-y-0 translate-y-1 flex justify-between items-center bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl text-xs font-bold text-amber-900 border border-amber-200/80 shadow-lg">
-          <span className="flex items-center gap-1.5">
-            <Ruler className="w-3.5 h-3.5 text-amber-700" />
-            Custom Size Calculator
+        {/* Quick Size Calculator Bar on Hover */}
+        <div className={`absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-xl text-slate-800 shadow-sm flex items-center justify-between opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0 ${
+          compact ? 'px-2 py-1 text-[10px] font-bold' : 'px-3 py-1.5 text-[11px] font-bold'
+        }`}>
+          <span className="flex items-center gap-1 text-sky-800">
+            <Ruler className={`${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'} text-sky-600`} />
+            <span>Customize</span>
           </span>
-          <ArrowUpRight className="w-4 h-4 text-amber-700 group-hover:translate-x-0.5 transition-transform" />
+          <ArrowUpRight className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} text-slate-600`} />
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+      <div className={`flex-1 flex flex-col justify-between ${compact ? 'p-2.5 space-y-2' : 'p-3.5 space-y-2.5'}`}>
         <div>
-          {/* Theme & Product Code */}
-          <div className="flex items-center justify-between text-[11px] font-bold text-amber-800 uppercase tracking-widest mb-1.5">
-            <span className="bg-amber-50 border border-amber-200/60 px-2.5 py-0.5 rounded-md text-amber-900">
-              {product.theme}
-            </span>
-            <span className="text-slate-400 font-mono text-[10px]">{product.code}</span>
+          {/* Category & Product Code */}
+          <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider">
+            <span className="truncate max-w-[60%]">{product.theme}</span>
+            <span>{product.code}</span>
           </div>
 
-          {/* Title */}
-          <h3 className="font-serif font-bold text-lg text-slate-900 line-clamp-1 group-hover:text-amber-800 transition-colors duration-200">
+          {/* Title (Strictly 1 line) */}
+          <h3 className={`font-serif font-bold text-slate-900 truncate group-hover:text-sky-700 transition-colors mt-0.5 ${
+            compact ? 'text-xs' : 'text-sm'
+          }`} title={product.title}>
             {product.title}
           </h3>
 
-          {/* Description */}
-          <p className="text-xs text-slate-500 line-clamp-2 mt-1 font-normal leading-relaxed">
-            {product.description}
-          </p>
-
           {/* Rating */}
-          <div className="flex items-center gap-2 mt-3">
-            <div className="flex items-center gap-1 bg-amber-50 border border-amber-200/50 px-2 py-0.5 rounded-full text-xs font-bold text-amber-900">
-              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+          <div className="flex items-center gap-1 mt-1 text-[10px] sm:text-[11px]">
+            <div className="flex items-center gap-0.5 text-amber-600 font-bold bg-amber-50/80 border border-amber-200/60 px-1.5 py-0.5 rounded-full">
+              <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
               <span>{product.rating}</span>
             </div>
-            <span className="text-xs text-slate-400 font-medium">({product.reviewsCount} reviews)</span>
+            <span className="text-slate-400 font-medium">({product.reviewsCount})</span>
           </div>
         </div>
 
-        {/* Footer: Price Tag & Customize Action */}
-        <div className="pt-4 border-t border-amber-900/10 flex items-center justify-between gap-3">
+        {/* Price & Action Row */}
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5">
           <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Price per sq.ft</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-extrabold text-amber-950 font-serif">₹{product.startingPrice}</span>
-              <span className="text-xs text-slate-500 font-medium">/ sqft</span>
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block leading-none">Starting at</span>
+            <div className="flex items-baseline gap-0.5 mt-0.5">
+              <span className={`font-serif font-extrabold text-slate-900 ${compact ? 'text-sm' : 'text-base'}`}>₹{product.startingPrice}</span>
+              <span className="text-[9px] text-slate-500 font-medium">/sqft</span>
             </div>
           </div>
 
-          <button
-            onClick={() => setActiveCustomizerProduct(product)}
-            className="bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 hover:from-amber-800 hover:to-amber-950 text-white text-xs font-bold px-4 py-2.5 rounded-2xl transition-all duration-300 flex items-center gap-1.5 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer"
+          <Link
+            to={`/product/${product.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className={`bg-sky-500 hover:bg-sky-600 text-white font-bold transition shadow-xs shadow-sky-500/20 flex items-center gap-1 cursor-pointer shrink-0 ${
+              compact ? 'px-2.5 py-1 rounded-lg text-[10px]' : 'px-3.5 py-2 rounded-xl text-xs'
+            }`}
           >
-            <Ruler className="w-3.5 h-3.5 text-amber-200" />
+            <Ruler className={`${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'} text-sky-100`} />
             <span>Customize</span>
-          </button>
+          </Link>
         </div>
 
       </div>

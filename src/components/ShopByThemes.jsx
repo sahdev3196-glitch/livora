@@ -22,32 +22,37 @@ export default function ShopByThemes({ activeTheme }) {
               <Link
                 key={theme.id}
                 to={theme.path}
+                onClick={() => {
+                  setTimeout(() => {
+                    document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 50);
+                }}
                 className="flex flex-col items-center text-center group focus:outline-none cursor-pointer"
               >
                 {/* Circular Image / Icon Container */}
                 <div className={`w-24 h-24 sm:w-32 lg:w-36 sm:h-32 lg:h-36 rounded-full overflow-hidden transition-all duration-300 ${
                   isSelected 
-                    ? 'ring-4 ring-amber-700 shadow-md scale-105' 
+                    ? 'ring-4 ring-sky-500 shadow-md scale-105' 
                     : 'group-hover:scale-105 group-hover:shadow-lg'
                 }`}>
                   {hasImage ? (
                     <img
                       src={theme.img}
                       alt={theme.name}
-                      onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=300&q=80'; }}
-                      className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => { e.target.src = `${import.meta.env.BASE_URL}crsl.webp`; }}
+                      className="w-full h-full object-cover object-top scale-110 rounded-full group-hover:scale-125 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full rounded-full flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-amber-100 via-amber-50 to-orange-100 group-hover:from-amber-200 group-hover:to-orange-200 transition-all duration-500">
+                    <div className="w-full h-full rounded-full flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-sky-100 via-sky-50 to-blue-100 group-hover:from-sky-200 group-hover:to-blue-200 transition-all duration-500">
                       <span className="text-3xl sm:text-4xl group-hover:scale-110 transition-transform duration-300">{theme.icon || '🎨'}</span>
-                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-amber-800/70">Explore</span>
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-sky-800/70">Explore</span>
                     </div>
                   )}
                 </div>
 
                 {/* Title Below Circle */}
                 <span className={`mt-3 text-xs sm:text-sm font-medium transition ${
-                  isSelected ? 'text-amber-900 font-bold' : 'text-slate-800 group-hover:text-amber-800'
+                  isSelected ? 'text-sky-900 font-bold' : 'text-slate-800 group-hover:text-sky-700'
                 }`}>
                   {theme.name}
                 </span>

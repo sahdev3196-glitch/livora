@@ -7,7 +7,7 @@ import { THEME_CATEGORIES, ROOM_CATEGORIES } from '../data/wallpapers';
 
 export default function Header({ onSearchChange, searchQuery, onOpenProfile, onOpenOrders }) {
   const { user, setIsAuthOpen, openAuth, logout } = useAuth();
-  const { cartItems, wishlist, setIsCartOpen } = useCart();
+  const { cartItems, wishlist } = useCart();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -72,7 +72,7 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
             to="/"
             className="inline-block group"
           >
-            <span className="font-serif text-2xl sm:text-4xl font-normal sm:font-light tracking-[0.22em] sm:tracking-[0.25em] text-slate-900 group-hover:text-amber-800 transition">
+            <span className="font-serif text-2xl sm:text-4xl font-normal sm:font-light tracking-[0.22em] sm:tracking-[0.25em] text-slate-900 group-hover:text-sky-700 transition">
               LIVORA
             </span>
           </Link>
@@ -105,10 +105,10 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                       src={user.avatar}
                       alt={user.name}
                       onError={() => setAvatarError(true)}
-                      className="w-5 h-5 rounded-full object-cover border border-amber-700"
+                      className="w-5 h-5 rounded-full object-cover border border-sky-500"
                     />
                   ) : (
-                    <div className="w-5 h-5 rounded-full bg-amber-800 text-amber-50 text-[10px] font-bold flex items-center justify-center uppercase shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-sky-500 text-white text-[10px] font-bold flex items-center justify-center uppercase shrink-0">
                       {user.name ? user.name.charAt(0) : 'U'}
                     </div>
                   )}
@@ -130,24 +130,20 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                     <p className="font-bold text-slate-800">{user.name}</p>
                     <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
                   </div>
-                  <button
-                    onClick={() => {
-                      setUserDropdown(false);
-                      if (onOpenOrders) onOpenOrders();
-                    }}
-                    className="w-full text-left px-4 py-2.5 hover:bg-amber-50 text-slate-700 hover:text-amber-900 font-medium transition border-b border-slate-100"
+                  <Link
+                    to="/orders"
+                    onClick={() => setUserDropdown(false)}
+                    className="block w-full text-left px-4 py-2.5 hover:bg-sky-50 text-slate-700 hover:text-sky-900 font-medium transition border-b border-slate-100"
                   >
                     My Orders & Tracking
-                  </button>
-                  <button
-                    onClick={() => {
-                      setUserDropdown(false);
-                      if (onOpenProfile) onOpenProfile();
-                    }}
-                    className="w-full text-left px-4 py-2.5 hover:bg-amber-50 text-slate-700 hover:text-amber-900 font-medium transition border-b border-slate-100"
+                  </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setUserDropdown(false)}
+                    className="block w-full text-left px-4 py-2.5 hover:bg-sky-50 text-slate-700 hover:text-sky-900 font-medium transition border-b border-slate-100"
                   >
                     My Profile & Address
-                  </button>
+                  </Link>
                   <button
                     onClick={() => { logout(); setUserDropdown(false); }}
                     className="w-full text-left px-4 py-2.5 text-rose-600 font-semibold hover:bg-rose-50 transition"
@@ -173,18 +169,18 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
             </Link>
 
             {/* Desktop Cart Icon */}
-            <button
-              onClick={() => setIsCartOpen(true)}
+            <Link
+              to="/cart"
               className="p-1.5 rounded-full hover:bg-slate-50 text-slate-800 transition relative cursor-pointer"
               title="Shopping Cart"
             >
               <ShoppingBag className="w-5 h-5 stroke-[1.75]" />
               {totalCartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-700 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-sky-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs">
                   {totalCartCount}
                 </span>
               )}
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -241,9 +237,9 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                         src={t.img}
                         alt={t.name}
                         onError={(e) => {
-                          e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=300&q=80';
+                          e.target.src = `${import.meta.env.BASE_URL}crsl.webp`;
                         }}
-                        className="w-7 h-7 rounded-full object-cover shrink-0 border border-amber-700/20"
+                        className="w-7 h-7 rounded-full object-cover shrink-0 border border-sky-200"
                       />
                     ) : (
                       <span className="text-base">{t.icon}</span>
@@ -277,9 +273,9 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                       src={r.img}
                       alt={r.name}
                       onError={(e) => {
-                        e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=300&q=80';
+                        e.target.src = `${import.meta.env.BASE_URL}crsl.webp`;
                       }}
-                      className="w-7 h-7 rounded-lg object-cover shrink-0 border border-amber-700/20"
+                      className="w-7 h-7 rounded-lg object-cover shrink-0 border border-sky-200"
                     />
                     <span className="text-xs font-semibold">{r.name} Wallpapers</span>
                   </Link>
@@ -288,31 +284,6 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
             </div>
           </div>
 
-          {/* Kids Wallpapers Dropdown */}
-          <div className="relative group py-2.5">
-            <Link
-              to="/room/kids-room"
-              className="flex items-center gap-1.5 hover:text-amber-800 text-slate-800 font-semibold transition py-1 cursor-pointer"
-            >
-              <span>Kids Wallpapers</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:rotate-180 transition-transform duration-200" />
-            </Link>
-
-            <div className="absolute left-0 top-full pt-1 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xl p-2 font-normal">
-                <Link
-                  to="/room/kids-room"
-                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-amber-50/80 hover:text-amber-900 transition text-slate-700 font-medium"
-                >
-                  <span className="text-lg">🎈</span>
-                  <div>
-                    <p className="font-bold text-xs">Kids Safari & Maps</p>
-                    <p className="text-[10px] text-slate-500 font-normal">Playful world maps & animals</p>
-                  </div>
-                </Link>
-              </div>
-            </div>
-          </div>
 
           {/* Wall Arts Dropdown */}
           <div className="relative group py-2.5">
@@ -395,21 +366,19 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                 >
                   <Search className="w-5 h-5 stroke-[1.75]" />
                 </button>
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setIsCartOpen(true);
-                  }}
+                <Link
+                  to="/cart"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="p-1 text-slate-800 hover:text-slate-600 transition cursor-pointer relative"
                   title="Shopping Bag"
                 >
                   <ShoppingBag className="w-5 h-5 stroke-[1.75]" />
                   {totalCartCount > 0 && (
-                    <span className="absolute top-0 right-0 w-4 h-4 bg-amber-700 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute top-0 right-0 w-4 h-4 bg-sky-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                       {totalCartCount}
                     </span>
                   )}
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -474,17 +443,6 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                 )}
               </div>
 
-              {/* 3. Kids Wallpapers */}
-              <div>
-                <Link
-                  to="/room/kids-room"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full px-4 py-2.5 sm:py-3 flex items-center justify-between hover:bg-slate-50 transition text-left"
-                >
-                  <span className="text-sm font-normal text-slate-800">Kids Wallpapers</span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </Link>
-              </div>
 
               {/* 4. Wall Arts */}
               <div>
@@ -554,24 +512,20 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      if (onOpenOrders) onOpenOrders();
-                    }}
-                    className="w-full py-2 bg-[#0b57d0] hover:bg-[#0842a0] text-white text-xs font-semibold rounded-md transition cursor-pointer"
+                  <Link
+                    to="/orders"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block w-full text-center py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-xl transition cursor-pointer"
                   >
                     My Orders & Tracking
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      if (onOpenProfile) onOpenProfile();
-                    }}
-                    className="w-full py-2 bg-white border border-[#0b57d0] text-[#0b57d0] hover:bg-blue-50 text-xs font-semibold rounded-md transition cursor-pointer"
+                  </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block w-full text-center py-2 bg-white border border-sky-500 text-sky-600 hover:bg-sky-50 text-xs font-semibold rounded-xl transition cursor-pointer"
                   >
                     My Profile & Address
-                  </button>
+                  </Link>
                   <button
                     onClick={() => {
                       logout();
@@ -589,7 +543,7 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                       setMobileMenuOpen(false);
                       openAuth ? openAuth('login') : setIsAuthOpen(true);
                     }}
-                    className="w-full py-2.5 bg-[#0b57d0] hover:bg-[#0842a0] text-white text-sm font-semibold rounded-md shadow-xs transition cursor-pointer text-center"
+                    className="w-full py-2.5 bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold rounded-xl shadow-xs transition cursor-pointer text-center"
                   >
                     Log in
                   </button>
@@ -599,7 +553,7 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
                       setMobileMenuOpen(false);
                       openAuth ? openAuth('signup') : setIsAuthOpen(true);
                     }}
-                    className="w-full py-2.5 bg-white border border-[#0b57d0] text-[#0b57d0] hover:bg-blue-50 text-sm font-semibold rounded-md transition cursor-pointer text-center"
+                    className="w-full py-2.5 bg-white border border-sky-500 text-sky-600 hover:bg-sky-50 text-sm font-semibold rounded-xl transition cursor-pointer text-center"
                   >
                     Register
                   </button>

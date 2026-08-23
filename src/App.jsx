@@ -8,10 +8,13 @@ import ShopByThemes from './components/ShopByThemes';
 import ShopByRoom from './components/ShopByRoom';
 import ProductCard from './components/ProductCard';
 import WallpaperCustomizer from './components/WallpaperCustomizer';
+import ProductDetailPage from './components/ProductDetailPage';
 import ReelsShowcase from './components/ReelsShowcase';
 import AuthModal from './components/AuthModal';
-import CartDrawer from './components/CartDrawer';
-import CheckoutModal from './components/CheckoutModal';
+import CartPage from './components/CartPage';
+import CheckoutPage from './components/CheckoutPage';
+import OrdersPage from './components/OrdersPage';
+import ProfilePage from './components/ProfilePage';
 import OrderSuccessModal from './components/OrderSuccessModal';
 import UserProfileModal from './components/UserProfileModal';
 import OrderHistoryModal from './components/OrderHistoryModal';
@@ -19,28 +22,15 @@ import Footer from './components/Footer';
 import { INITIAL_WALLPAPERS, getThemeFromSlug, getRoomFromSlug } from './data/wallpapers';
 import { Sparkles, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 
+
 function CatalogContent() {
   const [products, setProducts] = useState(INITIAL_WALLPAPERS);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isOrdersOpen, setIsOrdersOpen] = useState(false);
-  const { activeCustomizerProduct, setActiveCustomizerProduct, wishlist } = useCart();
+  const { wishlist } = useCart();
   
   const location = useLocation();
   const navigate = useNavigate();
   const { themeSlug, roomSlug, productId } = useParams();
-
-  // Pagination State (10 items per page)
-  const ITEMS_PER_PAGE = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-
-  // Auto-open product customizer if accessing /product/:productId directly via URL
-  useEffect(() => {
-    if (productId && products.length > 0) {
-      const found = products.find(p => p.id === productId);
-      if (found) setActiveCustomizerProduct(found);
-    }
-  }, [productId, products]);
 
   // Determine current active filter from URL path
   let selectedTheme = 'all';
@@ -48,61 +38,74 @@ function CatalogContent() {
 
   if (location.pathname === '/wishlist') {
     selectedTheme = 'wishlist';
-  } else if (location.pathname.startsWith('/category/')) {
+  } else if (themeSlug) {
     selectedTheme = getThemeFromSlug(themeSlug);
-  } else if (location.pathname.startsWith('/room/')) {
+  } else if (roomSlug) {
     selectedRoom = getRoomFromSlug(roomSlug);
   } else if (location.pathname === '/kids-wallpapers') {
-    selectedRoom = 'Kids Room';
-  } else if (location.pathname === '/wall-arts') {
-    selectedTheme = 'Chinoiserie';
+    selectedTheme = 'Kids Wallpapers';
   }
+
+  // 5 items for "All Custom Wallpapers" (1 from each folder), 15 items per page for specific category pages
+  const isAllView = selectedTheme === 'all' && selectedRoom === 'all' && !searchQuery;
+  const ITEMS_PER_PAGE = isAllView ? 5 : 15;
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Reset pagination when filter or location changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [location.pathname, selectedTheme, selectedRoom, searchQuery]);
+  }, [location.pathname, themeSlug, roomSlug, searchQuery]);
 
   // Scroll logic when URL changes
   useEffect(() => {
     if (selectedTheme !== 'all' || selectedRoom !== 'all' || location.pathname === '/wishlist') {
-      document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => {
+        document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [location.pathname, selectedTheme, selectedRoom]);
 
-  // Fetch products directly from backend server API
+  // Products catalog fallback protection
   useEffect(() => {
     fetch('/api/products')
       .then(res => res.json())
       .then(data => {
-        if (data.products && data.products.length > 0) {
+        if (data.products && data.products.length >= INITIAL_WALLPAPERS.length) {
           setProducts(data.products);
         }
       })
-      .catch(err => console.log('Using initial products catalog fallback', err));
+      .catch(() => {});
   }, []);
 
   // Filtering Logic
-  const filteredProducts = products.filter(p => {
+  const filteredProducts = (products || INITIAL_WALLPAPERS).filter(p => {
+    if (!p) return false;
     if (selectedTheme === 'wishlist') {
       return wishlist.some(w => w.id === p.id);
     }
-    const matchesTheme = selectedTheme === 'all' || p.theme.toLowerCase() === selectedTheme.toLowerCase();
-    const matchesRoom = selectedRoom === 'all' || p.room.toLowerCase() === selectedRoom.toLowerCase();
-    const matchesSearch = !searchQuery || 
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      p.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.room.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.code.toLowerCase().includes(searchQuery.toLowerCase());
+    const cleanFilter = (selectedTheme || 'all').toLowerCase().replace(/[\s\-_&]+/g, '');
+    const cleanProductTheme = (p.theme || '').toLowerCase().replace(/[\s\-_&]+/g, '');
+    const matchesTheme = cleanFilter === 'all' || cleanProductTheme === cleanFilter;
+
+    const cleanRoomFilter = (selectedRoom || 'all').toLowerCase().replace(/[\s\-_&]+/g, '');
+    const cleanProductRoom = (p.room || '').toLowerCase().replace(/[\s\-_&]+/g, '');
+    const matchesRoom = cleanRoomFilter === 'all' || cleanProductRoom === cleanRoomFilter;
+
+    const q = (searchQuery || '').toLowerCase().trim();
+    const matchesSearch = !q || 
+      (p.title && p.title.toLowerCase().includes(q)) || 
+      (p.theme && p.theme.toLowerCase().includes(q)) ||
+      (p.room && p.room.toLowerCase().includes(q)) ||
+      (p.code && p.code.toLowerCase().includes(q));
 
     return matchesTheme && matchesRoom && matchesSearch;
   });
 
   // Pagination calculations
   const totalItems = filteredProducts.length;
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
@@ -120,30 +123,33 @@ function CatalogContent() {
       <Header
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
-        onOpenProfile={() => setIsProfileOpen(true)}
-        onOpenOrders={() => setIsOrdersOpen(true)}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 bg-white">
         
-        {/* Hero & Category Carousels - standard home features */}
+        {/* Hero Banner & Features on Main Homepage */}
+        {selectedTheme === 'all' && selectedRoom === 'all' && !searchQuery && location.pathname === '/' && (
+          <HeroBanner onExplore={() => document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' })} />
+        )}
+
+        {/* Shop By Themes Bar (Always accessible for easy category switching) */}
+        <ShopByThemes activeTheme={selectedTheme} />
+
         {selectedTheme === 'all' && selectedRoom === 'all' && !searchQuery && location.pathname === '/' && (
           <>
-            <HeroBanner onExplore={() => document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' })} />
-            <ShopByThemes activeTheme={selectedTheme} />
             <ReelsShowcase />
             <ShopByRoom activeRoom={selectedRoom} />
           </>
         )}
 
         {/* Catalog Section */}
-        <section id="catalog-section" className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-white">
+        <section id="catalog-section" className="py-12 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 bg-white">
           
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-slate-100 gap-4">
             <div>
-              <span className="text-[11px] font-bold text-amber-900 uppercase tracking-widest bg-amber-50 border border-amber-200/60 px-2.5 py-0.5 rounded">
+              <span className="text-[11px] font-bold text-sky-900 uppercase tracking-widest bg-sky-50 border border-sky-200/80 px-2.5 py-0.5 rounded-full">
                 {selectedTheme === 'wishlist' ? 'Saved Wallpapers' : 'LIVORA Collection'}
               </span>
               <h2 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 mt-1.5 flex items-center gap-2">
@@ -162,87 +168,122 @@ function CatalogContent() {
 
             <div className="flex items-center gap-3">
               {location.pathname !== '/' && (
-                <Link to="/" className="text-xs font-semibold text-amber-800 hover:underline">
+                <Link to="/" className="text-xs font-semibold text-sky-700 hover:underline">
                   ← Back to Home
                 </Link>
               )}
-              <div className="text-xs font-semibold text-slate-500 bg-white border border-slate-200 px-3.5 py-1.5 rounded-full shadow-xs">
+              <div className="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-full shadow-xs">
                 Showing <strong>{totalItems > 0 ? `${startIndex + 1}-${endIndex}` : 0}</strong> of <strong>{totalItems}</strong> Made-to-Order Wallpapers (@ ₹60/sqft)
               </div>
             </div>
           </div>
 
-          {/* Product Grid */}
+          {/* Product Grid (4-5 cards per line depending on screen width) */}
           {paginatedProducts.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-3xl border border-amber-900/10 p-8 space-y-3">
-              <Sparkles className="w-10 h-10 text-amber-500 mx-auto" />
+            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 space-y-3">
+              <Sparkles className="w-10 h-10 text-emerald-500 mx-auto" />
               <h3 className="font-serif font-bold text-lg text-slate-800">No wallpapers match your filter</h3>
               <p className="text-xs text-slate-500">Try searching for alternative themes like Pichwai, Tropical, or Room type.</p>
               <Link
                 to="/"
                 onClick={() => setSearchQuery('')}
-                className="inline-block mt-2 text-xs font-bold text-amber-800 underline hover:text-amber-900"
+                className="inline-block mt-2 text-xs font-bold text-emerald-800 underline hover:text-emerald-900"
               >
                 Reset All Filters & View All
               </Link>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
                 {paginatedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
 
-              {/* 10 Items per page Pagination Controls */}
+              {/* Premium Smart Window Pagination */}
               {totalPages > 1 && (
-                <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-amber-900/10">
-                  <span className="text-xs text-slate-500 font-medium">
-                    Showing <strong>{startIndex + 1}-{endIndex}</strong> of <strong>{totalItems}</strong> wallpapers (Page {currentPage} of {totalPages})
-                  </span>
+                <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-100">
+                  <div className="text-xs text-slate-500 font-medium flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-sky-500" />
+                    <span>
+                      Showing <strong>{startIndex + 1}–{endIndex}</strong> of <strong>{totalItems}</strong> wallpapers • Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+                    </span>
+                  </div>
 
-                  <div className="flex items-center flex-wrap justify-center gap-1 sm:gap-1.5 bg-white p-1 rounded-2xl border border-slate-200 shadow-xs max-w-full">
+                  <nav className="inline-flex items-center gap-1 sm:gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm" aria-label="Pagination Navigation">
                     {/* Previous Button */}
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                      className={`px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
                         currentPage === 1
                           ? 'text-slate-300 cursor-not-allowed'
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 cursor-pointer'
+                          : 'text-slate-700 hover:bg-sky-50 hover:text-sky-900 cursor-pointer active:scale-95'
                       }`}
+                      title="Previous Page"
                     >
-                      <ChevronLeft className="w-4 h-4" /> Previous
+                      <ChevronLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline">Prev</span>
                     </button>
 
-                    {/* Page Numbers */}
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                      <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`w-8 h-8 rounded-xl text-xs font-bold transition flex items-center justify-center cursor-pointer ${
-                          pageNum === currentPage
-                            ? 'bg-amber-100 text-amber-900 border border-amber-300 font-extrabold shadow-xs'
-                            : 'text-slate-700 hover:bg-amber-50 hover:text-amber-900'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    ))}
+                    {/* Smart Page Numbers with Ellipses */}
+                    {(() => {
+                      let pages = [];
+                      if (totalPages <= 7) {
+                        pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+                      } else if (currentPage <= 4) {
+                        pages = [1, 2, 3, 4, 5, '...', totalPages];
+                      } else if (currentPage >= totalPages - 3) {
+                        pages = [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+                      } else {
+                        pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+                      }
+
+                      return pages.map((page, idx) => {
+                        if (page === '...') {
+                          return (
+                            <span
+                              key={`ellipsis-${idx}`}
+                              className="w-7 sm:w-8 h-9 flex items-center justify-center text-xs font-bold text-slate-400 select-none tracking-widest"
+                            >
+                              •••
+                            </span>
+                          );
+                        }
+
+                        const isActive = page === currentPage;
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`w-8 sm:w-9 h-8 sm:h-9 rounded-xl text-xs transition flex items-center justify-center cursor-pointer ${
+                              isActive
+                                ? 'bg-sky-500 text-white font-extrabold shadow-md shadow-sky-500/25 ring-2 ring-sky-400/30'
+                                : 'text-slate-700 font-bold hover:bg-sky-50 hover:text-sky-900'
+                            }`}
+                            aria-current={isActive ? 'page' : undefined}
+                          >
+                            {page}
+                          </button>
+                        );
+                      });
+                    })()}
 
                     {/* Next Button */}
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+                      className={`px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
                         currentPage === totalPages
                           ? 'text-slate-300 cursor-not-allowed'
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 cursor-pointer'
+                          : 'text-slate-700 hover:bg-sky-50 hover:text-sky-900 cursor-pointer active:scale-95'
                       }`}
+                      title="Next Page"
                     >
-                      Next <ChevronRight className="w-4 h-4" />
+                      <span className="hidden sm:inline">Next</span>
+                      <ChevronRight className="w-4 h-4" />
                     </button>
-                  </div>
+                  </nav>
                 </div>
               )}
             </>
@@ -255,37 +296,10 @@ function CatalogContent() {
       {/* Footer */}
       <Footer />
 
-      {/* Wallpaper Customizer Sq Ft Calculator Modal */}
-      {activeCustomizerProduct && (
-        <WallpaperCustomizer
-          product={activeCustomizerProduct}
-          onClose={() => {
-            setActiveCustomizerProduct(null);
-            if (location.pathname.startsWith('/product/')) navigate('/');
-          }}
-        />
-      )}
+
 
       {/* Auth Modal */}
       <AuthModal />
-
-      {/* User Saved Profile & Shipping Address Modal */}
-      <UserProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-      />
-
-      {/* User Unique Orders & Live Tracking Modal */}
-      <OrderHistoryModal
-        isOpen={isOrdersOpen}
-        onClose={() => setIsOrdersOpen(false)}
-      />
-
-      {/* Cart Slide-Over Drawer */}
-      <CartDrawer />
-
-      {/* Payment Gateway Checkout Modal */}
-      <CheckoutModal />
 
       {/* Order Confirmation Invoice Modal */}
       <OrderSuccessModal />
@@ -298,7 +312,11 @@ function MainCatalogRoutes() {
   return (
     <Routes>
       <Route path="/" element={<CatalogContent />} />
-      <Route path="/product/:productId" element={<CatalogContent />} />
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/product/:productId" element={<ProductDetailPage />} />
+      <Route path="/orders" element={<OrdersPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
       <Route path="/category/:themeSlug" element={<CatalogContent />} />
       <Route path="/room/:roomSlug" element={<CatalogContent />} />
       <Route path="/wishlist" element={<CatalogContent />} />

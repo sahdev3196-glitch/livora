@@ -58,7 +58,7 @@ export default function HeroBanner() {
             src={slide.image}
             alt={slide.title}
             onError={(e) => {
-              e.target.src = 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=2000&q=85';
+              e.target.src = `${import.meta.env.BASE_URL}crsl.webp`;
             }}
             className="w-full h-full object-cover object-center transform scale-100 group-hover:scale-105 transition-transform duration-1000 ease-out"
           />

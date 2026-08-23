@@ -25,14 +25,14 @@ export default function ShopByRoom({ activeRoom }) {
                 {/* Image Container with Smooth Non-Pointy Rounded Corners */}
                 <div className={`w-full aspect-[4/3] rounded-xl sm:rounded-2xl overflow-hidden bg-slate-100 transition-all duration-300 ${
                   isSelected
-                    ? 'ring-3 ring-amber-700 shadow-md scale-[1.02]'
+                    ? 'ring-3 ring-sky-500 shadow-md scale-[1.02]'
                     : 'shadow-xs group-hover:shadow-md group-hover:scale-[1.02]'
                 }`}>
                   <img
                     src={room.img}
                     alt={room.name}
                     onError={(e) => {
-                      e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80';
+                      e.target.src = `${import.meta.env.BASE_URL}crsl.webp`;
                     }}
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
                   />
@@ -40,7 +40,7 @@ export default function ShopByRoom({ activeRoom }) {
                 
                 {/* Room Title Below Card */}
                 <span className={`mt-3 text-xs sm:text-sm font-medium transition ${
-                  isSelected ? 'text-amber-900 font-bold' : 'text-slate-800 group-hover:text-amber-800'
+                  isSelected ? 'text-sky-900 font-bold' : 'text-slate-800 group-hover:text-sky-700'
                 }`}>
                   {room.name}
                 </span>

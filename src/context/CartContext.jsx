@@ -13,9 +13,6 @@ export const CartProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [activeCustomizerProduct, setActiveCustomizerProduct] = useState(null);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(null);
 
   useEffect(() => {
@@ -28,6 +25,7 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product, customSpecs) => {
     // customSpecs: { widthFt, heightFt, totalSqFt, paperOption, itemTotal }
+    const baseTotal = customSpecs.itemTotal;
     const newItem = {
       cartId: Date.now() + '_' + Math.random().toString(36).substr(2, 4),
       productId: product.id,
@@ -39,13 +37,28 @@ export const CartProvider = ({ children }) => {
       totalSqFt: customSpecs.totalSqFt,
       paperOption: customSpecs.paperOption,
       pricePerSqFt: customSpecs.paperOption.pricePerSqFt,
-      itemTotal: customSpecs.itemTotal,
+      baseItemTotal: baseTotal,
+      itemTotal: baseTotal,
       quantity: 1
     };
 
     setCartItems(prev => [newItem, ...prev]);
-    setActiveCustomizerProduct(null);
-    setIsCartOpen(true);
+  };
+
+  const updateQuantity = (cartId, delta) => {
+    setCartItems(prev => prev.map(item => {
+      if (item.cartId === cartId) {
+        const newQty = Math.max(1, (item.quantity || 1) + delta);
+        const base = item.baseItemTotal || item.itemTotal;
+        return {
+          ...item,
+          baseItemTotal: base,
+          quantity: newQty,
+          itemTotal: base * newQty
+        };
+      }
+      return item;
+    }));
   };
 
   const removeFromCart = (cartId) => {
@@ -78,15 +91,10 @@ export const CartProvider = ({ children }) => {
       value={{
         cartItems,
         wishlist,
-        isCartOpen,
-        setIsCartOpen,
-        activeCustomizerProduct,
-        setActiveCustomizerProduct,
-        isCheckoutOpen,
-        setIsCheckoutOpen,
         orderSuccess,
         setOrderSuccess,
         addToCart,
+        updateQuantity,
         removeFromCart,
         toggleWishlist,
         isWishlisted,
@@ -100,3 +108,4 @@ export const CartProvider = ({ children }) => {
 };
 
 export const useCart = () => useContext(CartContext);
+
