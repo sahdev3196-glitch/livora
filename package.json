@@ -8,7 +8,7 @@
     "dev": "vite",
     "server": "node server/index.js",
     "start": "concurrently \"npm run server\" \"npm run dev\"",
-    "build": "vite build && shx cp dist/index.html dist/404.html",
+    "build": "vite build",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "preview": "vite preview"
