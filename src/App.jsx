@@ -81,14 +81,17 @@ function CatalogContent() {
 
   // Products catalog fetch with local data fallback
   useEffect(() => {
-    fetch('/api/products')
-      .then(res => res.json())
-      .then(data => {
-        if (data.products && data.products.length >= INITIAL_WALLPAPERS.length) {
-          setProducts(data.products);
-        }
-      })
-      .catch(() => {});
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (apiUrl) {
+      fetch(`${apiUrl}/api/products`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.products && data.products.length >= INITIAL_WALLPAPERS.length) {
+            setProducts(data.products);
+          }
+        })
+        .catch(() => {});
+    }
   }, []);
 
   // Filtering Logic

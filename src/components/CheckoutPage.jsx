@@ -44,27 +44,46 @@ export default function CheckoutPage() {
       }
     };
 
-    try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
-      });
-      const data = await res.json();
+    const successOrder = {
+      id: 'LIV-' + Math.floor(100000 + Math.random() * 900000),
+      createdAt: new Date().toISOString(),
+      customer: orderData.customer,
+      items: orderData.items,
+      totalAmount: subtotal,
+      paymentDetails: orderData.paymentDetails,
+      status: 'PAID',
+      trackingNumber: 'LIV-TRK-' + Math.floor(100000 + Math.random() * 900000)
+    };
 
-      setLoading(false);
-      clearCart();
-      
-      const successOrder = data.order || { id: 'LIV-' + Math.floor(100000 + Math.random() * 900000), totalAmount: subtotal };
-      setOrderSuccess(successOrder);
-      navigate('/');
-    } catch (err) {
-      console.error('Order processing failed:', err);
-      setLoading(false);
-      clearCart();
-      setOrderSuccess({ id: 'LIV-' + Math.floor(100000 + Math.random() * 900000), totalAmount: subtotal });
-      navigate('/');
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (apiUrl) {
+      try {
+        const res = await fetch(`${apiUrl}/api/orders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        });
+        const data = await res.json();
+        if (data.order) {
+          Object.assign(successOrder, data.order);
+        }
+      } catch (err) {
+        console.warn('Backend order sync fallback to local storage:', err);
+      }
     }
+
+    // Always save to localStorage so OrdersPage can display order immediately
+    try {
+      const userOrdersKey = `livora_orders_${user?.id || 'guest'}`;
+      const existing = JSON.parse(localStorage.getItem(userOrdersKey) || '[]');
+      existing.unshift(successOrder);
+      localStorage.setItem(userOrdersKey, JSON.stringify(existing));
+    } catch (e) {}
+
+    setLoading(false);
+    clearCart();
+    setOrderSuccess(successOrder);
+    navigate('/');
   };
 
   return (

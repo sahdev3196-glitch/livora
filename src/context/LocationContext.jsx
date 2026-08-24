@@ -14,9 +14,12 @@ export const LocationProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Sync location data to backend database if user is logged in
+  // Sync location data to backend database if user is logged in and backend URL exists
   const syncLocationToDatabase = useCallback(async (locData, currentUser, currentToken) => {
     if (!locData || (!currentUser && !currentToken)) return;
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (!apiUrl) return; // Stored in localStorage and cookies on static deployments
+
     try {
       const email = currentUser?.email;
       const headers = { 'Content-Type': 'application/json' };
@@ -24,7 +27,7 @@ export const LocationProvider = ({ children }) => {
         headers['Authorization'] = `Bearer ${currentToken}`;
       }
 
-      await fetch('/api/user/location', {
+      await fetch(`${apiUrl}/api/user/location`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({
@@ -40,7 +43,7 @@ export const LocationProvider = ({ children }) => {
         })
       });
     } catch (err) {
-      console.warn('Could not sync location to backend database:', err);
+      // Backend not reached
     }
   }, []);
 

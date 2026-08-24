@@ -21,26 +21,34 @@ export default function OrdersPage() {
 
   const fetchUserOrders = async () => {
     setLoading(true);
+    let userOrders = [];
     try {
-      let res = await fetch('/api/user/orders', {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const userOrdersKey = `livora_orders_${user?.id || 'guest'}`;
+      const cached = JSON.parse(localStorage.getItem(userOrdersKey) || '[]');
+      userOrders = cached;
+
+      const apiUrl = import.meta.env.VITE_API_URL;
+      if (apiUrl) {
+        let res = await fetch(`${apiUrl}/api/user/orders`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok && user) {
+          res = await fetch(`${apiUrl}/api/orders/user/${user.id}?email=${encodeURIComponent(user.email)}`);
         }
-      });
 
-      if (!res.ok && user) {
-        // Fallback query by user ID / email
-        res = await fetch(`/api/orders/user/${user.id}?email=${encodeURIComponent(user.email)}`);
-      }
-
-      const data = await res.json();
-      if (data.orders) {
-        setOrders(data.orders);
-        if (data.orders.length > 0) setSelectedOrder(data.orders[0]);
+        const data = await res.json();
+        if (data.orders && data.orders.length > 0) {
+          userOrders = data.orders;
+        }
       }
     } catch (err) {
-      console.error('Failed to fetch user orders:', err);
+      console.warn('Using local order history:', err);
     } finally {
+      setOrders(userOrders);
+      if (userOrders.length > 0) setSelectedOrder(userOrders[0]);
       setLoading(false);
     }
   };

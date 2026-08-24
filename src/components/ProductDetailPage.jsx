@@ -27,18 +27,21 @@ export default function ProductDetailPage() {
       setProduct(found);
       setActiveImage(found.roomMockup || found.image);
     } else {
-      fetch('/api/products')
-        .then(res => res.json())
-        .then(data => {
-          if (data.products) {
-            const apiFound = data.products.find(p => p.id === productId || p.code === productId);
-            if (apiFound) {
-              setProduct(apiFound);
-              setActiveImage(apiFound.roomMockup || apiFound.image);
+      const apiUrl = import.meta.env.VITE_API_URL;
+      if (apiUrl) {
+        fetch(`${apiUrl}/api/products`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.products) {
+              const apiFound = data.products.find(p => p.id === productId || p.code === productId);
+              if (apiFound) {
+                setProduct(apiFound);
+                setActiveImage(apiFound.roomMockup || apiFound.image);
+              }
             }
-          }
-        })
-        .catch(() => {});
+          })
+          .catch(() => {});
+      }
     }
   }, [productId]);
 

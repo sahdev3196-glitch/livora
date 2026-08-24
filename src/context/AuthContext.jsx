@@ -62,24 +62,27 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUserProfile = async (profileData) => {
-    try {
-      const res = await fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(profileData)
-      });
-      const data = await res.json();
-      if (data.user) {
-        const mergedUser = { ...user, ...data.user };
-        setUser(mergedUser);
-        localStorage.setItem('livora_user', JSON.stringify(mergedUser));
-        return true;
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (apiUrl) {
+      try {
+        const res = await fetch(`${apiUrl}/api/user/profile`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(profileData)
+        });
+        const data = await res.json();
+        if (data.user) {
+          const mergedUser = { ...user, ...data.user };
+          setUser(mergedUser);
+          localStorage.setItem('livora_user', JSON.stringify(mergedUser));
+          return true;
+        }
+      } catch (err) {
+        console.warn('Error updating remote profile:', err);
       }
-    } catch (err) {
-      console.error('Error updating profile:', err);
     }
     const mergedUser = { ...user, ...profileData };
     setUser(mergedUser);
