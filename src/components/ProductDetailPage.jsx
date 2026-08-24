@@ -45,10 +45,17 @@ export default function ProductDetailPage() {
     }
   }, [productId]);
 
-  // Scroll to top when productId changes
+  // Scroll to top & set dynamic product SEO title
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [productId]);
+    if (product) {
+      document.title = `${product.title} — Custom Wallpaper starting at ₹60/sqft | LIVORA`;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute('content', `Customize ${product.title} made-to-measure wallpaper mural for your walls. ${product.theme} collection, starting at ₹60/sqft. Pan-India delivery.`);
+      }
+    }
+  }, [productId, product]);
 
   const handleScroll = (direction) => {
     if (scrollRef.current) {

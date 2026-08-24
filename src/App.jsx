@@ -12,6 +12,7 @@ import ReelsShowcase from './components/ReelsShowcase';
 import AuthModal from './components/AuthModal';
 import LocationPermissionModal from './components/LocationPermissionModal';
 import OrderSuccessModal from './components/OrderSuccessModal';
+import SEOSection from './components/SEOSection';
 import Footer from './components/Footer';
 import { INITIAL_WALLPAPERS, getThemeFromSlug, getRoomFromSlug } from './data/wallpapers';
 import { Sparkles, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -78,6 +79,26 @@ function CatalogContent() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [location.pathname, selectedTheme, selectedRoom]);
+
+  // Dynamic SEO Title and Description Manager
+  useEffect(() => {
+    let title = 'LIVORA — Premium Custom Wallpapers starting at ₹60/sqft | Buy Online India';
+    let desc = 'Transform your walls with LIVORA made-to-measure custom wallpapers & murals starting at ₹60/sqft. Premium textures, Pichwai, Tropical, Boho, Kids designs with PAN India delivery.';
+
+    if (selectedTheme !== 'all' && selectedTheme !== 'wishlist') {
+      title = `${selectedTheme} Custom Wallpapers starting at ₹60/sqft | LIVORA`;
+      desc = `Explore handcrafted ${selectedTheme} custom made-to-measure wallpapers and murals. Premium organic prints for your walls with pan-India express shipping.`;
+    } else if (selectedRoom !== 'all') {
+      title = `${selectedRoom} Wallpaper Designs | Made-to-Measure Murals | LIVORA`;
+      desc = `Bespoke wallpaper collection for ${selectedRoom}. Customize wall dimensions, choose from 5 luxury textures with eco-certified inks.`;
+    } else if (location.pathname === '/wishlist') {
+      title = 'My Saved Wallpapers | LIVORA Wishlist';
+    }
+
+    document.title = title;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute('content', desc);
+  }, [selectedTheme, selectedRoom, location.pathname]);
 
   // Products catalog fetch with local data fallback
   useEffect(() => {
@@ -302,6 +323,11 @@ function CatalogContent() {
           )}
 
         </section>
+
+        {/* Rich SEO & FAQ Section on Homepage */}
+        {selectedTheme === 'all' && selectedRoom === 'all' && !searchQuery && location.pathname === '/' && (
+          <SEOSection />
+        )}
 
       </main>
 
