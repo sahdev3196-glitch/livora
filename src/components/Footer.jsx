@@ -52,16 +52,16 @@ export default function Footer() {
             <h4 className="font-serif font-bold text-sm text-slate-900 uppercase tracking-wider">Help & Consultation</h4>
             <div className="space-y-2 text-slate-600">
               <p className="flex items-center gap-2">
-                <PhoneCall className="w-4 h-4 text-amber-700" />
-                <span>+91 98765 43210</span>
+                <PhoneCall className="w-4 h-4 text-sky-700" />
+                <a href="tel:+918005827701" className="hover:text-sky-900 transition">+91 80058 27701</a>
               </p>
               <p className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-amber-700" />
-                <span>support@livora.in</span>
+                <Mail className="w-4 h-4 text-sky-700" />
+                <a href="mailto:info@livorawallcovering.com" className="hover:text-sky-900 transition">info@livorawallcovering.com</a>
               </p>
               <p className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-                <span>Design Studio, Luxury Decor Hub, Mumbai & Delhi, India</span>
+                <MapPin className="w-4 h-4 text-sky-700 shrink-0 mt-0.5" />
+                <span>Katraj, Pune, Maharashtra - 411046, India</span>
               </p>
             </div>
           </div>
@@ -82,7 +82,7 @@ export default function Footer() {
 
       {/* Floating WhatsApp Button */}
       <a
-        href="https://wa.me/919876543210"
+        href="https://wa.me/918005827701"
         target="_blank"
         rel="noreferrer"
         className="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl transition hover:scale-110 flex items-center justify-center border-2 border-white group"

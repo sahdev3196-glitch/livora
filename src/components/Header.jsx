@@ -339,7 +339,7 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
 
           {/* Contact Us */}
           <a
-            href="https://wa.me/919876543210"
+            href="https://wa.me/918005827701"
             target="_blank"
             rel="noreferrer"
             className="hover:text-amber-800 transition py-1 font-semibold"
@@ -504,7 +504,7 @@ export default function Header({ onSearchChange, searchQuery, onOpenProfile, onO
               {/* 6. Contact Us */}
               <div>
                 <a
-                  href="https://wa.me/919876543210"
+                  href="https://wa.me/918005827701"
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => setMobileMenuOpen(false)}

@@ -229,7 +229,7 @@ export default function CheckoutPage() {
                         required
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        placeholder="e.g. Mumbai"
+                        placeholder="e.g. Pune"
                         className="w-full px-4 py-3 bg-sky-50/30 border border-sky-200/80 rounded-2xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-sky-500 focus:outline-none transition"
                       />
                     </div>
@@ -257,7 +257,7 @@ export default function CheckoutPage() {
                         required
                         value={pincode}
                         onChange={(e) => setPincode(e.target.value)}
-                        placeholder="400001"
+                        placeholder="411046"
                         className="w-full px-4 py-3 bg-sky-50/30 border border-sky-200/80 rounded-2xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-sky-500 focus:outline-none transition"
                       />
                     </div>

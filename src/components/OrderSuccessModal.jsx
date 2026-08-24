@@ -54,7 +54,7 @@ export default function OrderSuccessModal() {
           </button>
 
           <a
-            href="https://wa.me/919876543210"
+            href="https://wa.me/918005827701"
             target="_blank"
             rel="noreferrer"
             className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold py-2.5 rounded-xl border border-emerald-200 transition flex items-center justify-center gap-2 text-xs"
