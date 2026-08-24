@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { signInWithGoogleFirebase } from '../firebase';
+import { syncUserToFirestore, getUserProfileFromFirestore } from '../services/firestoreService';
 
 const AuthContext = createContext();
 
@@ -17,7 +18,18 @@ export const AuthProvider = ({ children }) => {
     const savedUser = localStorage.getItem('livora_user');
     if (savedUser && token) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        // Refresh profile from Firestore if available
+        if (parsed.id) {
+          getUserProfileFromFirestore(parsed.id).then(remoteUser => {
+            if (remoteUser) {
+              const updated = { ...parsed, ...remoteUser };
+              setUser(updated);
+              localStorage.setItem('livora_user', JSON.stringify(updated));
+            }
+          }).catch(() => {});
+        }
       } catch (e) {
         localStorage.removeItem('livora_user');
       }
@@ -35,6 +47,9 @@ export const AuthProvider = ({ children }) => {
       const googleUser = firebaseRes.user;
       const googleToken = 'firebase_jwt_' + Date.now();
 
+      // Sync user profile to Firestore
+      await syncUserToFirestore(googleUser);
+
       setUser(googleUser);
       setToken(googleToken);
       localStorage.setItem('livora_token', googleToken);
@@ -50,6 +65,8 @@ export const AuthProvider = ({ children }) => {
         provider: 'google'
       };
       const fallbackToken = 'token_' + Date.now();
+      await syncUserToFirestore(fallbackUser);
+
       setUser(fallbackUser);
       setToken(fallbackToken);
       localStorage.setItem('livora_token', fallbackToken);
@@ -62,31 +79,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUserProfile = async (profileData) => {
-    const apiUrl = import.meta.env.VITE_API_URL;
-    if (apiUrl) {
-      try {
-        const res = await fetch(`${apiUrl}/api/user/profile`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(profileData)
-        });
-        const data = await res.json();
-        if (data.user) {
-          const mergedUser = { ...user, ...data.user };
-          setUser(mergedUser);
-          localStorage.setItem('livora_user', JSON.stringify(mergedUser));
-          return true;
-        }
-      } catch (err) {
-        console.warn('Error updating remote profile:', err);
-      }
-    }
     const mergedUser = { ...user, ...profileData };
     setUser(mergedUser);
     localStorage.setItem('livora_user', JSON.stringify(mergedUser));
+
+    // Save directly to Firestore
+    await syncUserToFirestore(mergedUser);
+
     return true;
   };
 

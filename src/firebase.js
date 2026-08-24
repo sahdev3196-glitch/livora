@@ -5,6 +5,7 @@ import {
   signInWithPopup, 
   signOut 
 } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // Official LIVORA Firebase Project Configuration
 const firebaseConfig = {
@@ -17,9 +18,10 @@ const firebaseConfig = {
   measurementId: "G-219T5YKKZQ"
 };
 
-// Initialize Firebase App & Auth Services
+// Initialize Firebase App & Services
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 

@@ -4,6 +4,7 @@ import { ShieldCheck, CreditCard, Lock, Smartphone, ChevronRight, ArrowLeft, Bui
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { loadRazorpayScript } from '../utils/razorpay';
+import { saveOrderToFirestore } from '../services/firestoreService';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -154,7 +155,14 @@ export default function CheckoutPage() {
               trackingNumber: 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000)
             };
 
-            // Always save to localStorage for instant order tracking
+            // Save order to Firestore Database
+            try {
+              await saveOrderToFirestore(successOrder);
+            } catch (fsErr) {
+              console.warn('Error saving order to Firestore:', fsErr);
+            }
+
+            // Always save to localStorage for offline / instant order tracking
             try {
               const userOrdersKey = `livora_orders_${user?.id || 'guest'}`;
               const existing = JSON.parse(localStorage.getItem(userOrdersKey) || '[]');

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { setCookie, getCookie } from '../utils/cookieUtils';
 import { useAuth } from './AuthContext';
+import { syncUserToFirestore, recordVisitorSession } from '../services/firestoreService';
 
 const LocationContext = createContext();
 
@@ -14,40 +15,18 @@ export const LocationProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Sync location data to backend database if user is logged in and backend URL exists
-  const syncLocationToDatabase = useCallback(async (locData, currentUser, currentToken) => {
-    if (!locData || (!currentUser && !currentToken)) return;
-    const apiUrl = import.meta.env.VITE_API_URL;
-    if (!apiUrl) return; // Stored in localStorage and cookies on static deployments
+  // Sync location data to Firestore and backend database
+  const syncLocationToDatabase = useCallback(async (locData, currentUser) => {
+    if (!locData) return;
 
-    try {
-      const email = currentUser?.email;
-      const headers = { 'Content-Type': 'application/json' };
-      if (currentToken) {
-        headers['Authorization'] = `Bearer ${currentToken}`;
-      }
-
-      await fetch(`${apiUrl}/api/user/location`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
-          email,
-          latitude: locData.latitude,
-          longitude: locData.longitude,
-          city: locData.city,
-          state: locData.state,
-          country: locData.country,
-          pincode: locData.pincode,
-          formattedAddress: locData.formattedAddress,
-          consent: true
-        })
-      });
-    } catch (err) {
-      // Backend not reached
+    // 1. Sync directly to Firestore
+    if (currentUser) {
+      syncUserToFirestore(currentUser, locData).catch(() => {});
     }
+    recordVisitorSession(locData).catch(() => {});
   }, []);
 
-  // Initialize on mount
+  // Initialize on mount & record visitor session
   useEffect(() => {
     // 1. Check existing cookie or localStorage
     const savedCookie = getCookie(COOKIE_LOCATION_KEY);
@@ -66,6 +45,9 @@ export const LocationProvider = ({ children }) => {
       setUserLocation(existingLocation);
     }
 
+    // Always record visitor session & telemetry in Firestore
+    recordVisitorSession(existingLocation).catch(() => {});
+
     // 2. Check if user already gave consent or dismissed
     const consent = getCookie(COOKIE_CONSENT_KEY) || localStorage.getItem(COOKIE_CONSENT_KEY);
     
@@ -78,12 +60,12 @@ export const LocationProvider = ({ children }) => {
     }
   }, []);
 
-  // When user logs in, immediately sync cached location to DB
+  // When user logs in or location updates, immediately sync to Firestore
   useEffect(() => {
-    if (user && userLocation) {
-      syncLocationToDatabase(userLocation, user, token);
+    if (user) {
+      syncUserToFirestore(user, userLocation).catch(() => {});
     }
-  }, [user, token, userLocation, syncLocationToDatabase]);
+  }, [user, userLocation]);
 
   // Reverse geocode latitude and longitude into address/city/state/pincode
   const reverseGeocode = async (latitude, longitude) => {
@@ -148,10 +130,8 @@ export const LocationProvider = ({ children }) => {
             localStorage.setItem(COOKIE_LOCATION_KEY, JSON.stringify(locationPayload));
             localStorage.setItem(COOKIE_CONSENT_KEY, 'granted');
 
-            // 3. Save in database if logged in
-            if (user) {
-              await syncLocationToDatabase(locationPayload, user, token);
-            }
+            // 3. Save in Firestore database for user & visitor telemetry
+            await syncLocationToDatabase(locationPayload, user);
 
             setIsPromptOpen(false);
             setLoading(false);
