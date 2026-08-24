@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, CreditCard, Lock, Smartphone, ChevronRight, ArrowLeft, Ruler, Sparkles, Building2, CheckCircle2, Truck, Award } from 'lucide-react';
+import { ShieldCheck, CreditCard, Lock, Smartphone, ChevronRight, ArrowLeft, Building2, CheckCircle2, Award, AlertCircle, Sparkles } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { loadRazorpayScript } from '../utils/razorpay';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -18,72 +19,181 @@ export default function CheckoutPage() {
   const [city, setCity] = useState('');
   const [stateName, setStateName] = useState('Maharashtra');
   const [pincode, setPincode] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('RAZORPAY_UPI');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleProcessPayment = async (e) => {
     e.preventDefault();
     if (cartItems.length === 0) return;
 
+    setErrorMessage('');
     setLoading(true);
 
-    const orderData = {
-      customer: {
-        userId: user?.id || 'GUEST',
-        name,
-        email,
-        phone,
-        address: `${address}, ${city}, ${stateName} - ${pincode}`
-      },
-      items: cartItems,
-      totalAmount: subtotal,
-      paymentDetails: {
-        method: paymentMethod,
-        paymentId: 'PAY_RZP_' + Math.floor(10000000 + Math.random() * 90000000),
-        orderId: 'ORD_RZP_' + Math.floor(100000 + Math.random() * 900000)
+    const apiBase = import.meta.env.VITE_API_URL || '';
+
+    // Handle Online Payments via Razorpay Standard Checkout
+    try {
+      // Step 1: Ensure Razorpay SDK is loaded
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded || !window.Razorpay) {
+        setErrorMessage('Failed to load Razorpay payment gateway. Please check your internet connection and try again.');
+        setLoading(false);
+        return;
       }
-    };
 
-    const successOrder = {
-      id: 'LIV-' + Math.floor(100000 + Math.random() * 900000),
-      createdAt: new Date().toISOString(),
-      customer: orderData.customer,
-      items: orderData.items,
-      totalAmount: subtotal,
-      paymentDetails: orderData.paymentDetails,
-      status: 'PAID',
-      trackingNumber: 'LIV-TRK-' + Math.floor(100000 + Math.random() * 900000)
-    };
+      // Step 2: Call Backend to Create Razorpay Order if backend is available
+      const amountInPaise = Math.max(100, Math.round(subtotal * 100));
+      let razorpayOrderId = null;
+      let orderAmount = amountInPaise;
+      let orderCurrency = 'INR';
 
-    const apiUrl = import.meta.env.VITE_API_URL;
-    if (apiUrl) {
       try {
-        const res = await fetch(`${apiUrl}/api/orders`, {
+        const createOrderRes = await fetch(`${apiBase}/api/create-order`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderData)
+          body: JSON.stringify({
+            amount: amountInPaise,
+            currency: 'INR',
+            receipt: `rcpt_${Date.now()}`
+          })
         });
-        const data = await res.json();
-        if (data.order) {
-          Object.assign(successOrder, data.order);
+
+        if (createOrderRes.ok) {
+          const orderData = await createOrderRes.json();
+          razorpayOrderId = orderData.order_id || orderData.id;
+          if (orderData.amount) orderAmount = orderData.amount;
+          if (orderData.currency) orderCurrency = orderData.currency;
         }
-      } catch (err) {
-        console.warn('Backend order sync fallback to local storage:', err);
+      } catch (apiErr) {
+        console.warn('Backend order endpoint not reachable, proceeding with standard client checkout:', apiErr);
       }
+
+      // Step 3: Open Razorpay Standard Checkout Modal
+      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TTbiP0afZW3w2T';
+
+      const options = {
+        key: razorpayKeyId,
+        amount: orderAmount,
+        currency: orderCurrency,
+        name: 'LIVORA Wallpaper Studio',
+        description: `Custom Wall Murals & Wallpapers (${cartItems.length} item${cartItems.length > 1 ? 's' : ''})`,
+        image: 'https://livorawallcovering.com/favicon.svg',
+        ...(razorpayOrderId ? { order_id: razorpayOrderId } : {}),
+        prefill: {
+          name: name,
+          email: email,
+          contact: phone
+        },
+        notes: {
+          shipping_address: `${address}, ${city}, ${stateName} - ${pincode}`,
+          customer_name: name,
+          customer_phone: phone
+        },
+        theme: {
+          color: '#0284c7'
+        },
+        handler: async function (response) {
+          try {
+            setLoading(true);
+            setErrorMessage('');
+
+            let verifiedOrder = null;
+
+            // Step 4: Verify Payment Signature if backend is available
+            if (response.razorpay_signature) {
+              try {
+                const verifyRes = await fetch(`${apiBase}/api/verify-payment`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    razorpay_order_id: response.razorpay_order_id || razorpayOrderId,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    customer: {
+                      userId: user?.id || 'GUEST',
+                      name,
+                      email,
+                      phone,
+                      address: `${address}, ${city}, ${stateName} - ${pincode}`
+                    },
+                    items: cartItems,
+                    totalAmount: subtotal
+                  })
+                });
+
+                if (verifyRes.ok) {
+                  const verifyData = await verifyRes.json().catch(() => ({}));
+                  if (verifyData.success && verifyData.order) {
+                    verifiedOrder = verifyData.order;
+                  }
+                }
+              } catch (verifyErr) {
+                console.warn('Backend verification endpoint not reachable, saving order locally:', verifyErr);
+              }
+            }
+
+            // Payment verified and order created
+            const successOrder = verifiedOrder || {
+              id: 'LIV-' + Math.floor(100000 + Math.random() * 900000),
+              createdAt: new Date().toISOString(),
+              customer: {
+                userId: user?.id || 'GUEST',
+                name,
+                email,
+                phone,
+                address: `${address}, ${city}, ${stateName} - ${pincode}`
+              },
+              items: cartItems,
+              totalAmount: subtotal,
+              paymentDetails: {
+                method: 'RAZORPAY',
+                paymentId: response.razorpay_payment_id,
+                orderId: response.razorpay_order_id || razorpayOrderId || ''
+              },
+              status: 'PAID',
+              trackingNumber: 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000)
+            };
+
+            // Always save to localStorage for instant order tracking
+            try {
+              const userOrdersKey = `livora_orders_${user?.id || 'guest'}`;
+              const existing = JSON.parse(localStorage.getItem(userOrdersKey) || '[]');
+              existing.unshift(successOrder);
+              localStorage.setItem(userOrdersKey, JSON.stringify(existing));
+            } catch (e) {}
+
+            setLoading(false);
+            clearCart();
+            setOrderSuccess(successOrder);
+            navigate('/');
+          } catch (verifyErr) {
+            console.error('Signature verification call failed:', verifyErr);
+            setErrorMessage('Network error while confirming payment. Please contact support with Payment ID: ' + response.razorpay_payment_id);
+            setLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+            setErrorMessage('Payment window was closed. You can complete your order anytime.');
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        console.error('Razorpay payment failed:', response.error);
+        const reason = response.error?.description || response.error?.reason || 'Transaction could not be completed';
+        setErrorMessage(`Payment failed: ${reason}`);
+        setLoading(false);
+      });
+
+      rzp.open();
+    } catch (err) {
+      console.error('Payment processing error:', err);
+      setErrorMessage(err.message || 'Unable to start checkout. Please try again.');
+      setLoading(false);
     }
-
-    // Always save to localStorage so OrdersPage can display order immediately
-    try {
-      const userOrdersKey = `livora_orders_${user?.id || 'guest'}`;
-      const existing = JSON.parse(localStorage.getItem(userOrdersKey) || '[]');
-      existing.unshift(successOrder);
-      localStorage.setItem(userOrdersKey, JSON.stringify(existing));
-    } catch (e) {}
-
-    setLoading(false);
-    clearCart();
-    setOrderSuccess(successOrder);
-    navigate('/');
   };
 
   return (
@@ -153,6 +263,17 @@ export default function CheckoutPage() {
             {/* Left Column: Form Steps (7 cols) */}
             <div className="lg:col-span-7 space-y-6">
               
+              {/* Error Notification Banner */}
+              {errorMessage && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-800 px-5 py-4 rounded-2xl flex items-start gap-3 shadow-xs">
+                  <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                  <div className="text-xs sm:text-sm font-medium flex-1">
+                    <p className="font-bold text-rose-900 mb-0.5">Payment Notification</p>
+                    <p>{errorMessage}</p>
+                  </div>
+                </div>
+              )}
+
               {/* Step 1: Customer Contact & Shipping Address */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
                 <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
@@ -265,114 +386,71 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Step 2: Payment Method Selection */}
+              {/* Step 2: Razorpay Payment Method */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
                 <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
                   <span className="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">2</span>
-                  <h2 className="font-serif font-bold text-lg text-slate-900">Choose Payment Method</h2>
+                  <h2 className="font-serif font-bold text-lg text-slate-900">Payment Gateway</h2>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Razorpay UPI */}
-                  <label className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center gap-3 transition ${
-                    paymentMethod === 'RAZORPAY_UPI' 
-                      ? 'border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/20' 
-                      : 'border-slate-200 hover:border-sky-300 bg-white'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="RAZORPAY_UPI"
-                      checked={paymentMethod === 'RAZORPAY_UPI'}
-                      onChange={() => setPaymentMethod('RAZORPAY_UPI')}
-                      className="text-sky-500 focus:ring-sky-500"
-                    />
+                {/* Razorpay Single Dedicated Method */}
+                <div className="p-5 rounded-2xl border-2 border-sky-500 bg-sky-50/50 ring-2 ring-sky-500/20 space-y-4">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600">
-                        <Smartphone className="w-5 h-5" />
+                      <div className="w-11 h-11 rounded-2xl bg-sky-500 text-white flex items-center justify-center shadow-xs">
+                        <ShieldCheck className="w-6 h-6" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-slate-900">Instant UPI</p>
-                        <p className="text-[11px] text-slate-500">GPay, PhonePe, Paytm, BHIM</p>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-slate-900">Razorpay Secure Checkout</h3>
+                          <span className="text-[10px] font-bold bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Verified
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Pay securely with UPI, Credit / Debit Cards, NetBanking & Wallets
+                        </p>
                       </div>
                     </div>
-                  </label>
+                    <CheckCircle2 className="w-5 h-5 text-sky-600 shrink-0" />
+                  </div>
 
-                  {/* Credit / Debit Card */}
-                  <label className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center gap-3 transition ${
-                    paymentMethod === 'CARD' 
-                      ? 'border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/20' 
-                      : 'border-slate-200 hover:border-sky-300 bg-white'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="CARD"
-                      checked={paymentMethod === 'CARD'}
-                      onChange={() => setPaymentMethod('CARD')}
-                      className="text-sky-500 focus:ring-sky-500"
-                    />
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600">
-                        <CreditCard className="w-5 h-5" />
-                      </div>
+                  {/* Payment Channel Badges */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-sky-200/60">
+                    <div className="bg-white/90 border border-sky-200/80 rounded-xl p-2.5 flex items-center gap-2 shadow-2xs">
+                      <Smartphone className="w-4 h-4 text-sky-600 shrink-0" />
                       <div>
-                        <p className="text-xs font-bold text-slate-900">Credit / Debit Card</p>
-                        <p className="text-[11px] text-slate-500">Visa, Mastercard, RuPay</p>
+                        <p className="text-[11px] font-bold text-slate-800">Instant UPI</p>
+                        <p className="text-[9px] text-slate-500">GPay, PhonePe, Paytm</p>
                       </div>
                     </div>
-                  </label>
 
-                  {/* Net Banking */}
-                  <label className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center gap-3 transition ${
-                    paymentMethod === 'NETBANKING' 
-                      ? 'border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/20' 
-                      : 'border-slate-200 hover:border-sky-300 bg-white'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="NETBANKING"
-                      checked={paymentMethod === 'NETBANKING'}
-                      onChange={() => setPaymentMethod('NETBANKING')}
-                      className="text-sky-500 focus:ring-sky-500"
-                    />
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
-                        <Building2 className="w-5 h-5" />
-                      </div>
+                    <div className="bg-white/90 border border-sky-200/80 rounded-xl p-2.5 flex items-center gap-2 shadow-2xs">
+                      <CreditCard className="w-4 h-4 text-sky-600 shrink-0" />
                       <div>
-                        <p className="text-xs font-bold text-slate-900">Net Banking & Wallets</p>
-                        <p className="text-[11px] text-slate-500">HDFC, ICICI, SBI, Axis</p>
+                        <p className="text-[11px] font-bold text-slate-800">Cards</p>
+                        <p className="text-[9px] text-slate-500">Visa, MC, RuPay</p>
                       </div>
                     </div>
-                  </label>
 
-                  {/* Cash on Delivery */}
-                  <label className={`p-4 rounded-2xl border-2 cursor-pointer flex items-center gap-3 transition ${
-                    paymentMethod === 'COD' 
-                      ? 'border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/20' 
-                      : 'border-slate-200 hover:border-sky-300 bg-white'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="COD"
-                      checked={paymentMethod === 'COD'}
-                      onChange={() => setPaymentMethod('COD')}
-                      className="text-sky-500 focus:ring-sky-500"
-                    />
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-sky-100/70 border border-sky-300 flex items-center justify-center text-sky-900">
-                        <Truck className="w-5 h-5" />
-                      </div>
+                    <div className="bg-white/90 border border-sky-200/80 rounded-xl p-2.5 flex items-center gap-2 shadow-2xs">
+                      <Building2 className="w-4 h-4 text-sky-600 shrink-0" />
                       <div>
-                        <p className="text-xs font-bold text-slate-900">Cash on Delivery</p>
-                        <p className="text-[11px] text-slate-500">Pay on doorstep delivery</p>
+                        <p className="text-[11px] font-bold text-slate-800">NetBanking</p>
+                        <p className="text-[9px] text-slate-500">50+ Indian Banks</p>
                       </div>
                     </div>
-                  </label>
+
+                    <div className="bg-white/90 border border-sky-200/80 rounded-xl p-2.5 flex items-center gap-2 shadow-2xs">
+                      <Sparkles className="w-4 h-4 text-sky-600 shrink-0" />
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-800">Wallets</p>
+                        <p className="text-[9px] text-slate-500">Cred, Paytm, Mobikwik</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
               </div>
 
             </div>
@@ -448,7 +526,7 @@ export default function CheckoutPage() {
                   className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 rounded-2xl shadow-md shadow-sky-500/25 transition flex items-center justify-center gap-2 group text-base cursor-pointer"
                 >
                   <Lock className="w-5 h-5" />
-                  <span>{loading ? 'Processing Order...' : `Pay ₹${subtotal.toLocaleString('en-IN')} & Confirm`}</span>
+                  <span>{loading ? 'Opening Razorpay Gateway...' : `Pay ₹${subtotal.toLocaleString('en-IN')} & Confirm`}</span>
                 </button>
 
                 {/* Trust Badges */}

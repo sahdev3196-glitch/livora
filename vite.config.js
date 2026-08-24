@@ -1,8 +1,17 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { app } from './server/index.js';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'express-api-server',
+      configureServer(server) {
+        server.middlewares.use(app);
+      }
+    }
+  ],
   base: '/',
   build: {
     target: 'esnext',
@@ -32,12 +41,6 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000
   },
   server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true
-      }
-    }
+    port: 5173
   }
 });

@@ -4,12 +4,19 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import dotenv from 'dotenv';
+import Razorpay from 'razorpay';
 import { db } from './database.js';
 import { seedDB } from './seed.js';
 import cloudinary, { uploadImageToCloudinary, getOptimizedImageUrl } from './cloudinary.js';
 
 dotenv.config();
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_live_TTbiP0afZW3w2T',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'y1SIZBABsa1nO2xJccOaZHXz'
+});
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -340,20 +347,150 @@ app.get('/api/products', (req, res) => {
 });
 
 // --- PAYMENT & ORDERS ROUTES ---
-app.post('/api/payment/create-order', (req, res) => {
-  const { amount, currency = 'INR', receipt } = req.body;
-  // Simulate Razorpay Order payload or integration
-  const razorpayOrderId = 'order_rzp_' + Math.random().toString(36).substr(2, 9);
-  res.json({
-    id: razorpayOrderId,
-    entity: 'order',
-    amount: amount * 100, // in paise
-    currency,
-    receipt: receipt || 'rcpt_' + Date.now(),
-    status: 'created'
-  });
-});
 
+// 1. Create Razorpay Order
+const createRazorpayOrderHandler = async (req, res) => {
+  try {
+    const { amount, currency = 'INR', receipt } = req.body;
+
+    if (amount === undefined || amount === null) {
+      return res.status(400).json({ error: 'Amount is required' });
+    }
+
+    const parsedAmount = parseInt(amount, 10);
+    if (isNaN(parsedAmount) || parsedAmount < 100) {
+      return res.status(400).json({
+        error: 'Amount must be at least 100 paise (₹1.00)'
+      });
+    }
+
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      return res.status(401).json({
+        error: 'Razorpay API credentials are not configured on server'
+      });
+    }
+
+    const options = {
+      amount: parsedAmount,
+      currency: currency.toUpperCase(),
+      receipt: receipt || `rcpt_${Date.now()}`
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    return res.status(200).json({
+      success: true,
+      order_id: order.id,
+      id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      receipt: order.receipt,
+      status: order.status
+    });
+  } catch (err) {
+    console.error('Razorpay Create Order Error:', err);
+    if (err.statusCode === 401 || (err.error && err.error.code === 'BAD_REQUEST_ERROR' && String(err.error.description).toLowerCase().includes('auth'))) {
+      return res.status(401).json({ error: 'Razorpay authentication failed: Invalid API credentials' });
+    }
+    return res.status(500).json({
+      error: err.error?.description || err.message || 'Failed to create Razorpay order'
+    });
+  }
+};
+
+app.post('/api/create-order', createRazorpayOrderHandler);
+app.post('/api/payment/create-order', createRazorpayOrderHandler);
+
+// 2. Verify Razorpay Payment Signature
+const verifyRazorpayPaymentHandler = (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      order_id,
+      payment_id,
+      signature,
+      customer,
+      items,
+      totalAmount
+    } = req.body;
+
+    const orderId = razorpay_order_id || order_id;
+    const paymentId = razorpay_payment_id || payment_id;
+    const signatureProvided = razorpay_signature || signature;
+
+    if (!orderId || !paymentId || !signatureProvided) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required payment verification fields (order_id, payment_id, signature)'
+      });
+    }
+
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keySecret) {
+      return res.status(500).json({
+        success: false,
+        error: 'Razorpay Key Secret is missing on server configuration'
+      });
+    }
+
+    // Generate expected HMAC-SHA256 signature
+    const generatedSignature = crypto
+      .createHmac('sha256', keySecret)
+      .update(`${orderId}|${paymentId}`)
+      .digest('hex');
+
+    const isSignatureValid = generatedSignature === signatureProvided;
+
+    if (!isSignatureValid) {
+      console.warn(`Payment signature mismatch: expected=${generatedSignature}, received=${signatureProvided}`);
+      return res.status(400).json({
+        success: false,
+        error: 'Payment verification failed: signature mismatch'
+      });
+    }
+
+    // Signature verified! Create order in DB if items are provided
+    let savedOrder = null;
+    if (items && items.length > 0) {
+      savedOrder = db.createOrder({
+        userId: customer?.userId || 'GUEST',
+        customerName: customer?.name || customer?.fullName || 'Valued Customer',
+        customerEmail: customer?.email || 'customer@livora.in',
+        userEmail: customer?.email || 'customer@livora.in',
+        customerPhone: customer?.phone || customer?.mobile || '',
+        shippingAddress: customer?.address ? `${customer.address}, ${customer.city || ''}, ${customer.state || ''} - ${customer.pincode || ''}` : 'Standard Delivery',
+        items,
+        totalAmount: totalAmount || 0,
+        status: 'PAID',
+        paymentMethod: 'RAZORPAY_ONLINE',
+        trackingNumber: 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000),
+        paymentId: paymentId,
+        razorpayOrderId: orderId
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment verified and confirmed successfully!',
+      order_id: orderId,
+      payment_id: paymentId,
+      order: savedOrder
+    });
+  } catch (err) {
+    console.error('Razorpay Signature Verification Error:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to verify payment signature'
+    });
+  }
+};
+
+app.post('/api/verify-payment', verifyRazorpayPaymentHandler);
+app.post('/api/payment/verify', verifyRazorpayPaymentHandler);
+
+// Manual or COD Orders fallback
 app.post('/api/orders', (req, res) => {
   try {
     const { items, customer, paymentDetails, totalAmount } = req.body;
@@ -370,7 +507,8 @@ app.post('/api/orders', (req, res) => {
       shippingAddress: customer?.address ? `${customer.address}, ${customer.city || ''}, ${customer.state || ''} - ${customer.pincode || ''}` : 'Standard Delivery',
       items,
       totalAmount,
-      status: 'PAID',
+      status: paymentDetails?.method === 'COD' ? 'CONFIRMED' : 'PAID',
+      paymentMethod: paymentDetails?.method || 'ONLINE',
       trackingNumber: 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000),
       paymentId: paymentDetails?.paymentId || 'PAY_' + Math.random().toString(36).substr(2, 9),
       razorpayOrderId: paymentDetails?.orderId || ''
@@ -378,7 +516,7 @@ app.post('/api/orders', (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Order created & payment confirmed successfully!',
+      message: 'Order created successfully!',
       order
     });
   } catch (err) {
@@ -397,6 +535,11 @@ app.get('/api/orders/user/:userId', (req, res) => {
   res.json({ orders });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 LIVORA Wallpaper Backend API running on http://localhost:${PORT}`);
-});
+export { app };
+
+// Auto-start listening if executed directly (e.g. node server/index.js)
+if (process.argv[1] && (process.argv[1].endsWith('index.js') || process.argv[1].endsWith('server/index.js') || process.argv[1].endsWith('server\\index.js'))) {
+  app.listen(PORT, () => {
+    console.log(`🚀 LIVORA Wallpaper Backend API running on http://localhost:${PORT}`);
+  });
+}
