@@ -43,10 +43,13 @@ export const signInWithGoogleFirebase = async () => {
       }
     };
   } catch (error) {
-    console.error("Firebase Google Auth Error:", error);
+    console.warn("Firebase Google Auth:", error.code || error.message);
     return {
       success: false,
-      error: error.message || "Google Authentication failed"
+      code: error.code,
+      error: error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request'
+        ? 'Sign-in cancelled'
+        : (error.message || "Google Authentication failed")
     };
   }
 };

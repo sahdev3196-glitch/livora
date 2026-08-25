@@ -19,6 +19,15 @@ export const AuthProvider = ({ children }) => {
     if (savedUser && token) {
       try {
         const parsed = JSON.parse(savedUser);
+        // Clean up legacy mock dummy user if it was saved previously
+        if (parsed.email === 'user.google@gmail.com' || parsed.id?.startsWith('usr_g_')) {
+          localStorage.removeItem('livora_user');
+          localStorage.removeItem('livora_token');
+          setUser(null);
+          setToken(null);
+          return;
+        }
+
         setUser(parsed);
         // Refresh profile from Firestore if available
         if (parsed.id) {
@@ -41,7 +50,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const firebaseRes = await signInWithGoogleFirebase();
       if (!firebaseRes.success) {
-        throw new Error(firebaseRes.error || 'Google Sign-In failed');
+        return { success: false, error: firebaseRes.error, code: firebaseRes.code };
       }
 
       const googleUser = firebaseRes.user;
@@ -58,21 +67,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (err) {
       console.error("Google Auth error:", err);
-      const fallbackUser = {
-        id: 'usr_g_' + Date.now(),
-        name: 'Google User',
-        email: 'user.google@gmail.com',
-        provider: 'google'
-      };
-      const fallbackToken = 'token_' + Date.now();
-      await syncUserToFirestore(fallbackUser);
-
-      setUser(fallbackUser);
-      setToken(fallbackToken);
-      localStorage.setItem('livora_token', fallbackToken);
-      localStorage.setItem('livora_user', JSON.stringify(fallbackUser));
-      setIsAuthOpen(false);
-      return { success: true };
+      return { success: false, error: err.message };
     } finally {
       setLoading(false);
     }

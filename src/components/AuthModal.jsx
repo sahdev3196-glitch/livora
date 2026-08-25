@@ -12,7 +12,9 @@ export default function AuthModal() {
     setError('');
     const res = await googleLogin();
     if (!res.success) {
-      setError(res.error || 'Google Sign-In failed. Please try again.');
+      if (res.code !== 'auth/popup-closed-by-user' && res.code !== 'auth/cancelled-popup-request' && res.error !== 'Sign-in cancelled') {
+        setError(res.error || 'Google Sign-In failed. Please try again.');
+      }
     }
   };
 
