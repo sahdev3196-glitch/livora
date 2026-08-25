@@ -2,44 +2,136 @@ import { db } from './database.js';
 
 export const initialPaperTypes = [
   {
-    id: 'eco-matte',
-    name: 'Non-Woven Eco Matte',
-    pricePerSqFt: 60,
+    id: 'non-woven-wallpaper',
+    name: 'Non Woven Wallpaper',
+    width: '59"',
+    regularPrice: 40,
+    embossedPrice: 72,
+    pricePerSqFt: 40,
+    hasEmbossed: true,
     isPopular: true,
-    tag: 'Starting at ₹60/sqft',
-    description: '100% Breathable, smooth luxury matte finish with eco-certified organic ink.'
+    tag: 'Popular Choice',
+    description: '100% Breathable smooth luxury non-woven substrate with eco-friendly organic ink.'
   },
   {
-    id: 'canvas-textured',
-    name: 'Canvas Textured Premium',
-    pricePerSqFt: 80,
+    id: 'hd-pvc-paper',
+    name: 'HD PVC Paper',
+    width: '59"',
+    regularPrice: 40,
+    embossedPrice: 72,
+    pricePerSqFt: 40,
+    hasEmbossed: true,
     isPopular: false,
-    tag: 'Best Seller',
-    description: 'Painterly fine-art canvas texture adding rich architectural depth.'
+    tag: 'High Definition',
+    description: 'Durable high-definition PVC paper with sharp vibrant colors and easy-wipe maintenance.'
   },
   {
-    id: 'royal-silk',
-    name: 'Royal Silk Satin Finish',
-    pricePerSqFt: 95,
+    id: 'non-tearable-feather',
+    name: 'Non Tearable Paper (Feather)',
+    width: '50"',
+    regularPrice: 56,
+    embossedPrice: 88,
+    pricePerSqFt: 56,
+    hasEmbossed: true,
+    isPopular: false,
+    tag: 'Tear-Proof Feather',
+    description: 'Lightweight ultra-durable non-tearable synthetic substrate with refined feather elegance.'
+  },
+  {
+    id: 'texture-canvas-paper',
+    name: 'Texture Canvas Paper',
+    width: '49"',
+    regularPrice: 96,
+    embossedPrice: 128,
+    pricePerSqFt: 96,
+    hasEmbossed: true,
     isPopular: true,
-    tag: 'Luxury Sheen',
-    description: 'Subtle pearlescent silk gloss for vibrant colors and palace grandeur.'
+    tag: 'Fine Art Texture',
+    description: 'Painterly fine-art canvas texture adding rich architectural depth and brushstroke feel.'
   },
   {
-    id: 'seamless-vinyl',
-    name: 'Seamless Heavy-Duty Vinyl',
-    pricePerSqFt: 110,
+    id: 'sandstone-texture-paper',
+    name: 'Sandstone Texture Paper',
+    width: '49"',
+    regularPrice: 96,
+    embossedPrice: 128,
+    pricePerSqFt: 96,
+    hasEmbossed: true,
     isPopular: false,
-    tag: '100% Washable',
-    description: 'Jointless single-sheet roll. Water-resistant and ultra-durable.'
+    tag: 'Granular Stone Finish',
+    description: 'Tactile sandstone stippled grain texture creating an earthy bespoke mural look.'
   },
   {
-    id: 'peel-stick',
-    name: 'Peel & Stick Self Adhesive',
-    pricePerSqFt: 125,
+    id: 'texture-canvas-fabric-back',
+    name: 'Texture Canvas Fabric Back',
+    width: '54"',
+    regularPrice: 96,
+    embossedPrice: 128,
+    pricePerSqFt: 96,
+    hasEmbossed: true,
     isPopular: false,
-    tag: 'Easy DIY',
-    description: 'No glue required. Easy peel-and-stick application for instant transformation.'
+    tag: 'Reinforced Fabric',
+    description: 'Heavy-duty textured canvas with reinforced woven fabric backing for lifetime durability.'
+  },
+  {
+    id: 'pure-canvas-fabric-jointless',
+    name: 'Pure Canvas Fabric Jointless',
+    width: '122"',
+    regularPrice: 96,
+    embossedPrice: 128,
+    pricePerSqFt: 96,
+    hasEmbossed: true,
+    isPopular: true,
+    tag: 'Jointless 122" Roll',
+    description: 'Seamless continuous ultra-wide 122" fabric roll for single-sheet seamless luxury walls.'
+  },
+  {
+    id: 'texture-self-adhesive-vinyl',
+    name: 'Texture Self Adhesive Vinyl',
+    width: '53"',
+    regularPrice: 96,
+    embossedPrice: 128,
+    pricePerSqFt: 96,
+    hasEmbossed: true,
+    isPopular: false,
+    tag: 'Peel & Stick Textured',
+    description: 'Textured peel-and-stick self-adhesive vinyl for quick tool-free DIY wall transformation.'
+  },
+  {
+    id: 'self-adhesive-vinyl',
+    name: 'Self Adhesive Vinyl',
+    width: '59"',
+    regularPrice: 40,
+    embossedPrice: 72,
+    pricePerSqFt: 40,
+    hasEmbossed: true,
+    isPopular: false,
+    tag: 'Peel & Stick DIY',
+    description: 'Smooth self-adhesive vinyl with strong peel-and-stick backing for clean flat walls.'
+  },
+  {
+    id: 'one-way-vision-vinyl',
+    name: 'One Way Vision Vinyl',
+    width: '59"',
+    regularPrice: 48,
+    embossedPrice: null,
+    pricePerSqFt: 48,
+    hasEmbossed: false,
+    isPopular: false,
+    tag: 'Perforated Vinyl',
+    description: 'Micro-perforated one-way vision film designed for glass partitions and exterior windows.'
+  },
+  {
+    id: 'gold-foil-on-non-woven',
+    name: 'Gold Foil on Non Woven',
+    width: '59"',
+    regularPrice: 88,
+    embossedPrice: null,
+    pricePerSqFt: 88,
+    hasEmbossed: false,
+    isPopular: true,
+    tag: 'Luxury Metallic Foil',
+    description: 'Opulent gold foil metallic sheen on premium non-woven base for palace aesthetics.'
   }
 ];
 

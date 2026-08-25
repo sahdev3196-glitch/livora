@@ -15,7 +15,7 @@ export default function Footer() {
               LIVORA
             </span>
             <p className="text-xs text-slate-600 leading-relaxed font-light">
-              India's premier luxury custom wallpaper studio. We print custom made-to-measure wall murals starting at ₹60/sq.ft with organic inks & multiple paper textures.
+              India's premier luxury custom wallpaper studio. We print custom made-to-measure wall murals starting at ₹40/sq.ft with organic inks & multiple paper textures.
             </p>
             <div className="flex items-center gap-3 text-xs text-slate-800 font-semibold pt-2">
               <Shield className="w-4 h-4 text-amber-700" /> 100% Quality Assurance
@@ -37,13 +37,13 @@ export default function Footer() {
 
           {/* Col 3: Paper Options */}
           <div className="space-y-3 text-xs">
-            <h4 className="font-serif font-bold text-sm text-slate-900 uppercase tracking-wider">Paper Options</h4>
+            <h4 className="font-serif font-bold text-sm text-slate-900 uppercase tracking-wider">Paper Qualities</h4>
             <ul className="space-y-2 text-slate-600">
-              <li><span className="text-slate-900 font-semibold">Non-Woven Eco Matte</span> — ₹60/sqft</li>
-              <li><span className="text-slate-900 font-semibold">Canvas Textured</span> — ₹80/sqft</li>
-              <li><span className="text-slate-900 font-semibold">Royal Silk Satin</span> — ₹95/sqft</li>
-              <li><span className="text-slate-900 font-semibold">Seamless Heavy Vinyl</span> — ₹110/sqft</li>
-              <li><span className="text-slate-900 font-semibold">Peel & Stick Adhesive</span> — ₹125/sqft</li>
+              <li><span className="text-slate-900 font-semibold">Non Woven Wallpaper (59")</span> — ₹40/sqft</li>
+              <li><span className="text-slate-900 font-semibold">HD PVC Paper (59")</span> — ₹40/sqft</li>
+              <li><span className="text-slate-900 font-semibold">Non Tearable Feather (50")</span> — ₹56/sqft</li>
+              <li><span className="text-slate-900 font-semibold">Pure Canvas Jointless (122")</span> — ₹96/sqft</li>
+              <li><span className="text-slate-900 font-semibold">Gold Foil on Non Woven</span> — ₹88/sqft</li>
             </ul>
           </div>
 

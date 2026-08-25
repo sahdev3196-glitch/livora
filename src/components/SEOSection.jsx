@@ -8,11 +8,19 @@ export default function SEOSection() {
   const faqs = [
     {
       q: 'What is the starting price for LIVORA custom wallpapers?',
-      a: 'LIVORA custom made-to-order wallpapers start at just ₹60 per square foot for our premium Non-Woven Eco Matte texture. Canvas textured is ₹80/sqft, Royal Silk Satin is ₹95/sqft, Seamless Heavy Vinyl is ₹110/sqft, and Peel & Stick DIY is ₹125/sqft with zero hidden charges.'
+      a: 'LIVORA custom made-to-order wallpapers start at just ₹40 per square foot for Non Woven Wallpaper, HD PVC Paper, and Self Adhesive Vinyl. Premium options include Non Tearable Feather (₹56/sqft), Texture Canvas & Sandstone (₹96/sqft), Pure Canvas Jointless 122" (₹96/sqft), and Gold Foil (₹88/sqft) with embossed 3D upgrade available.'
+    },
+    {
+      q: 'What is the difference between Regular Print and Embossed 3D Print?',
+      a: 'Regular Print delivers a crisp, smooth high-definition matte artwork finish. Embossed 3D Print adds an elevated, tactile relief texture over key artwork motifs for a luxury architectural feel with depth and touchable grandeur.'
     },
     {
       q: 'How do I measure my wall for custom wallpaper printing?',
       a: 'Simply measure the maximum width and maximum height of your wall in inches or centimeters using a measuring tape. We recommend adding 2 inches (5 cm) extra to both width and height for bleed trimming during installation.'
+    },
+    {
+      q: 'Is there a minimum order billing size for custom wallpapers?',
+      a: 'Yes, custom wallpapers have a minimum billing size of 12 square feet per mural/panel to cover precision machine setup and eco-latex calibration. If your measured wall area is less than 12 sq ft, billing is calculated at the 12 sq ft minimum.'
     },
     {
       q: 'Are LIVORA wallpapers safe for kids and bedrooms?',
@@ -24,7 +32,7 @@ export default function SEOSection() {
     },
     {
       q: 'How does custom wallpaper installation work?',
-      a: 'Each wallpaper is printed in sequential numbered vertical drops that align seamlessly edge-to-edge. Any local professional wallpaper installer can install it in under 2 hours. We also provide full installation support and WhatsApp assistance at +91 80058 27701.'
+      a: 'Each wallpaper is printed in sequential numbered vertical drops (or single seamless sheet for Pure Canvas 122") that align seamlessly edge-to-edge. Any local professional wallpaper installer can install it in under 2 hours.'
     }
   ];
 
@@ -73,9 +81,9 @@ export default function SEOSection() {
             <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-800">
               <Layers className="w-6 h-6" />
             </div>
-            <h3 className="font-serif font-bold text-base text-slate-900">5 Luxury Textures</h3>
+            <h3 className="font-serif font-bold text-base text-slate-900">11 Premium Substrates</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Choose from Non-Woven Matte, Canvas Art, Royal Silk Satin, Seamless Vinyl, and Peel & Stick starting at ₹60/sqft.
+              Choose from Non Woven, Feather, Canvas, Jointless 122" Fabric, Vinyl & Gold Foil starting at ₹40/sqft.
             </p>
           </div>
 
@@ -96,27 +104,53 @@ export default function SEOSection() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
             <div>
               <span className="text-[11px] font-bold text-sky-900 uppercase tracking-widest">Transparency & Value</span>
-              <h3 className="font-serif font-bold text-xl text-slate-900 mt-0.5">Wallpaper Material & Price Guide</h3>
+              <h3 className="font-serif font-bold text-xl text-slate-900 mt-0.5">Wallpaper Material Quality & Price Chart</h3>
             </div>
-            <span className="text-xs font-semibold text-slate-500">All prices per square foot (@ ₹60 starting rate)</span>
+            <span className="text-xs font-semibold text-slate-500">All prices per square foot • Starting at ₹40/sqft</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {PAPER_OPTIONS.map((p) => (
-              <div key={p.id} className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200 space-y-2 flex flex-col justify-between">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700 bg-sky-100/80 px-2 py-0.5 rounded-full inline-block mb-1.5">
-                    {p.tag}
-                  </span>
-                  <h4 className="text-xs font-bold text-slate-900">{p.name}</h4>
-                  <p className="text-[11px] text-slate-500 mt-1 leading-normal">{p.description}</p>
-                </div>
-                <div className="pt-2 border-t border-slate-200/60 flex items-baseline justify-between">
-                  <span className="text-xs text-slate-400 font-medium">Rate:</span>
-                  <span className="text-sm font-serif font-extrabold text-slate-900">₹{p.pricePerSqFt}<span className="text-[10px] font-normal text-slate-500">/sqft</span></span>
-                </div>
-              </div>
-            ))}
+          {/* Responsive Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] sm:text-[11px] tracking-wider bg-slate-50/80">
+                  <th className="py-3 px-3 text-center w-12">No.</th>
+                  <th className="py-3 px-4">Paper Quality / Substrate</th>
+                  <th className="py-3 px-4 text-center">Max Print Area (Width)</th>
+                  <th className="py-3 px-4 text-right">Regular Price / Sq.Ft.</th>
+                  <th className="py-3 px-4 text-right">Embossed 3D Price / Sq.Ft.</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {PAPER_OPTIONS.map((paper, index) => (
+                  <tr key={paper.id} className="hover:bg-sky-50/40 transition-colors">
+                    <td className="py-3.5 px-3 text-center font-mono font-bold text-slate-400">
+                      {String(index + 1).padStart(2, '0')}
+                    </td>
+                    <td className="py-3.5 px-4 font-semibold text-slate-900">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span>{paper.name}</span>
+                        {paper.tag && (
+                          <span className="text-[9px] font-bold text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.2 rounded-full">
+                            {paper.tag}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-normal mt-0.5">{paper.description}</p>
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-mono font-bold text-slate-700">
+                      {paper.width}
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-serif font-extrabold text-slate-900">
+                      ₹{paper.regularPrice}
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-serif font-extrabold text-sky-900">
+                      {paper.hasEmbossed ? `₹${paper.embossedPrice}` : <span className="text-slate-300 font-sans font-normal">—</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 

@@ -138,11 +138,17 @@ export default function CartPage() {
                             <Ruler className="w-3.5 h-3.5 text-sky-600" />
                             <span>Dimensions: <strong>{item.widthFt} × {item.heightFt}</strong></span>
                             <span className="text-sky-600/60">•</span>
-                            <span><strong>{item.totalSqFt}</strong> Sq. Ft.</span>
+                            <span><strong>{item.totalSqFt}</strong> Sq. Ft.{item.isMinBillApplied || (item.totalSqFt && item.totalSqFt < 12) ? ' (Min. 12 sq.ft billed)' : ''}</span>
                           </div>
 
                           <div className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-xl font-medium">
-                            <span>Texture: <strong className="text-slate-900">{item.paperOption.name}</strong></span>
+                            <span>Texture: <strong className="text-slate-900">{item.paperOption.name}{item.paperOption.selectedFinish ? ` (${item.paperOption.selectedFinish})` : ''}</strong></span>
+                            {item.paperOption.width && (
+                              <>
+                                <span className="text-slate-400">•</span>
+                                <span className="text-slate-500 font-mono text-[11px]">{item.paperOption.width} Roll</span>
+                              </>
+                            )}
                             <span className="text-slate-400">•</span>
                             <span>₹{item.pricePerSqFt}/sqft</span>
                           </div>

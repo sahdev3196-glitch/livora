@@ -112,7 +112,7 @@ export default function ProductCard({ product, compact = false }) {
           <div>
             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block leading-none">Starting at</span>
             <div className="flex items-baseline gap-0.5 mt-0.5">
-              <span className={`font-serif font-extrabold text-slate-900 ${compact ? 'text-sm' : 'text-base'}`}>₹{product.startingPrice}</span>
+              <span className={`font-serif font-extrabold text-slate-900 ${compact ? 'text-sm' : 'text-base'}`}>₹{product.startingPrice === 60 ? 40 : (product.startingPrice || 40)}</span>
               <span className="text-[9px] text-slate-500 font-medium">/sqft</span>
             </div>
           </div>

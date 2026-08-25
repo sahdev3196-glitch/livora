@@ -82,15 +82,15 @@ function CatalogContent() {
 
   // Dynamic SEO Title and Description Manager
   useEffect(() => {
-    let title = 'LIVORA — Premium Custom Wallpapers starting at ₹60/sqft | Buy Online India';
-    let desc = 'Transform your walls with LIVORA made-to-measure custom wallpapers & murals starting at ₹60/sqft. Premium textures, Pichwai, Tropical, Boho, Kids designs with PAN India delivery.';
+    let title = 'LIVORA — Premium Custom Wallpapers starting at ₹40/sqft | Buy Online India';
+    let desc = 'Transform your walls with LIVORA made-to-measure custom wallpapers & murals starting at ₹40/sqft. Premium textures, Pichwai, Tropical, Boho, Kids designs with PAN India delivery.';
 
     if (selectedTheme !== 'all' && selectedTheme !== 'wishlist') {
-      title = `${selectedTheme} Custom Wallpapers starting at ₹60/sqft | LIVORA`;
+      title = `${selectedTheme} Custom Wallpapers starting at ₹40/sqft | LIVORA`;
       desc = `Explore handcrafted ${selectedTheme} custom made-to-measure wallpapers and murals. Premium organic prints for your walls with pan-India express shipping.`;
     } else if (selectedRoom !== 'all') {
       title = `${selectedRoom} Wallpaper Designs | Made-to-Measure Murals | LIVORA`;
-      desc = `Bespoke wallpaper collection for ${selectedRoom}. Customize wall dimensions, choose from 5 luxury textures with eco-certified inks.`;
+      desc = `Bespoke wallpaper collection for ${selectedRoom}. Customize wall dimensions, choose from 11 luxury textures with eco-certified inks.`;
     } else if (location.pathname === '/wishlist') {
       title = 'My Saved Wallpapers | LIVORA Wishlist';
     }
@@ -209,7 +209,7 @@ function CatalogContent() {
                 </Link>
               )}
               <div className="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-full shadow-xs">
-                Showing <strong>{totalItems > 0 ? `${startIndex + 1}-${endIndex}` : 0}</strong> of <strong>{totalItems}</strong> Made-to-Order Wallpapers (@ ₹60/sqft)
+                Showing <strong>{totalItems > 0 ? `${startIndex + 1}-${endIndex}` : 0}</strong> of <strong>{totalItems}</strong> Made-to-Order Wallpapers (@ ₹40/sqft)
               </div>
             </div>
           </div>

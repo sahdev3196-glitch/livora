@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Heart, Star, Sparkles, Ruler, ChevronRight, ChevronLeft, ArrowLeft, Check, ShieldCheck, Truck, Award, ShoppingBag, Info } from 'lucide-react';
+import { Heart, Star, Sparkles, Ruler, ChevronRight, ChevronLeft, ChevronDown, ArrowLeft, Check, ShieldCheck, Truck, Award, ShoppingBag, Info } from 'lucide-react';
 import { PAPER_OPTIONS, INITIAL_WALLPAPERS } from '../data/wallpapers';
 import { useCart } from '../context/CartContext';
 import ProductCard from './ProductCard';
@@ -19,6 +19,18 @@ export default function ProductDetailPage() {
   const [width, setWidth] = useState('');
   const [height, setHeight] = useState('');
   const [selectedPaper, setSelectedPaper] = useState(PAPER_OPTIONS[0]);
+  const [isEmbossed, setIsEmbossed] = useState(false);
+  const [isGoldFoil, setIsGoldFoil] = useState(false);
+
+  // Sync checkboxes if paper option changes
+  useEffect(() => {
+    if (!selectedPaper?.hasEmbossed) {
+      setIsEmbossed(false);
+    }
+    if (selectedPaper?.id === 'gold-foil-on-non-woven') {
+      setIsGoldFoil(true);
+    }
+  }, [selectedPaper]);
 
   useEffect(() => {
     // Find product from initial catalog or fetch API
@@ -49,10 +61,10 @@ export default function ProductDetailPage() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (product) {
-      document.title = `${product.title} — Custom Wallpaper starting at ₹60/sqft | LIVORA`;
+      document.title = `${product.title} — Custom Wallpaper starting at ₹40/sqft | LIVORA`;
       const metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
-        metaDesc.setAttribute('content', `Customize ${product.title} made-to-measure wallpaper mural for your walls. ${product.theme} collection, starting at ₹60/sqft. Pan-India delivery.`);
+        metaDesc.setAttribute('content', `Customize ${product.title} made-to-measure wallpaper mural for your walls. ${product.theme} collection, starting at ₹40/sqft. Pan-India delivery.`);
       }
     }
   }, [productId, product]);
@@ -102,10 +114,26 @@ export default function ProductDetailPage() {
 
   // Rounded Sq Ft (2 decimal places)
   const roundedSqFt = Math.round(totalSqFt * 100) / 100;
-
-  // Calculate Total Price
-  const totalCost = Math.round(roundedSqFt * selectedPaper.pricePerSqFt);
   const hasDimensions = wNum > 0 && hNum > 0;
+  
+  // Minimum billing of 12 sq. ft.
+  const billableSqFt = hasDimensions ? Math.max(12, roundedSqFt) : 0;
+  const isMinBillApplied = hasDimensions && roundedSqFt < 12;
+
+  // Current effective rate per sq ft based on paper selection + enhancements
+  const baseRate = selectedPaper ? selectedPaper.regularPrice : 40;
+  const embossRate = (isEmbossed && selectedPaper?.hasEmbossed) ? 32 : 0;
+  const foilRate = (isGoldFoil && selectedPaper?.id !== 'gold-foil-on-non-woven') ? 48 : 0;
+  const currentPricePerSqFt = baseRate + embossRate + foilRate;
+
+  // Selected Finish Display Label
+  const finishLabels = [];
+  if (isEmbossed && selectedPaper?.hasEmbossed) finishLabels.push('Embossed 3D');
+  if (isGoldFoil) finishLabels.push('Golden Foil');
+  const selectedFinishText = finishLabels.length > 0 ? finishLabels.join(' + ') : 'Regular Print';
+
+  // Calculate Total Price based on billable sq ft (Min 12 sq.ft.)
+  const totalCost = Math.round(billableSqFt * currentPricePerSqFt);
 
   const handleAddToCart = () => {
     if (!hasDimensions) return;
@@ -113,7 +141,16 @@ export default function ProductDetailPage() {
       widthFt: `${wNum} ${unit}`,
       heightFt: `${hNum} ${unit}`,
       totalSqFt: roundedSqFt,
-      paperOption: selectedPaper,
+      billableSqFt: billableSqFt,
+      isMinBillApplied: isMinBillApplied,
+      paperOption: {
+        ...selectedPaper,
+        isEmbossed: Boolean(isEmbossed && selectedPaper?.hasEmbossed),
+        isGoldFoil: Boolean(isGoldFoil),
+        selectedFinish: selectedFinishText,
+        pricePerSqFt: currentPricePerSqFt,
+        name: selectedPaper.name
+      },
       itemTotal: totalCost
     });
     navigate('/cart');
@@ -272,47 +309,157 @@ export default function ProductDetailPage() {
               </p>
             </div>
 
-            {/* Step 1: Material Texture Picker */}
+            {/* Step 1: Paper Quality Select Dropdown */}
             <div className="space-y-2.5">
-              <label className="text-xs font-bold text-slate-900 block">
-                1. Select Paper Texture Material
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="paper-select" className="text-xs font-bold text-slate-900 block">
+                  1. Select Paper Quality
+                </label>
+                <span className="text-[10px] font-semibold text-sky-800 bg-sky-50 border border-sky-200/80 px-2 py-0.5 rounded-full">
+                  Roll Width: {selectedPaper.width}
+                </span>
+              </div>
 
-              <div className="space-y-2">
-                {PAPER_OPTIONS.map((paper) => (
-                  <div
-                    key={paper.id}
-                    onClick={() => setSelectedPaper(paper)}
-                    className={`p-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
-                      selectedPaper.id === paper.id
-                        ? 'border-sky-500 bg-sky-50/50 ring-2 ring-sky-500/20 shadow-xs'
-                        : 'border-slate-200 hover:border-sky-300 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        selectedPaper.id === paper.id ? 'border-sky-500 bg-sky-500 text-white' : 'border-slate-300'
-                      }`}>
-                        {selectedPaper.id === paper.id && <Check className="w-3 h-3 stroke-[3]" />}
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-900">{paper.name}</h4>
-                        <p className="text-[10px] text-slate-500">{paper.desc}</p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-extrabold text-slate-900 font-mono">
-                      ₹{paper.pricePerSqFt}/sqft
-                    </span>
+              {/* Styled Select Dropdown */}
+              <div className="relative">
+                <select
+                  id="paper-select"
+                  value={selectedPaper.id}
+                  onChange={(e) => {
+                    const found = PAPER_OPTIONS.find(p => p.id === e.target.value);
+                    if (found) {
+                      setSelectedPaper(found);
+                      if (!found.hasEmbossed) setIsEmbossed(false);
+                      if (found.id === 'gold-foil-on-non-woven') setIsGoldFoil(true);
+                    }
+                  }}
+                  className="w-full bg-white border-2 border-slate-200 hover:border-sky-300 focus:border-sky-500 rounded-2xl px-4 py-3.5 text-xs sm:text-sm font-bold text-slate-900 shadow-xs appearance-none focus:outline-none focus:ring-2 focus:ring-sky-500/20 cursor-pointer pr-10 transition-colors"
+                >
+                  {PAPER_OPTIONS.map((paper, idx) => (
+                    <option key={paper.id} value={paper.id}>
+                      {String(idx + 1).padStart(2, '0')}. {paper.name} ({paper.width}) — ₹{paper.regularPrice}/sqft
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Selected Paper Details Mini-Card */}
+              <div className="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-slate-900">{selectedPaper.name}</span>
+                    {selectedPaper.tag && (
+                      <span className="text-[9px] font-extrabold text-sky-900 bg-sky-100/80 px-2 py-0.2 rounded-full border border-sky-200">
+                        {selectedPaper.tag}
+                      </span>
+                    )}
                   </div>
-                ))}
+                  <p className="text-[10px] text-slate-500">{selectedPaper.description}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-[10px] text-slate-400 font-medium block">Base Regular Price</span>
+                  <span className="text-xs sm:text-sm font-extrabold font-mono text-slate-900">
+                    ₹{selectedPaper.regularPrice}<span className="text-[10px] font-normal text-slate-500">/sqft</span>
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Step 2: Wall Dimensions Input */}
+            {/* Step 2: Enhancements Checkboxes (Emboss & Golden Foil) */}
+            <div className="space-y-3 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-900 block">
+                  2. Select Enhancements & Finishes (Optional)
+                </label>
+                <span className="text-[10px] text-slate-400 font-medium">Customize your print effect</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                
+                {/* Emboss Checkbox */}
+                <label
+                  className={`p-3.5 rounded-2xl border-2 transition-all flex items-start gap-3 select-none ${
+                    !selectedPaper.hasEmbossed
+                      ? 'border-slate-200 bg-slate-50/50 opacity-60 cursor-not-allowed'
+                      : isEmbossed
+                        ? 'border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/20 shadow-xs cursor-pointer'
+                        : 'border-slate-200 hover:border-sky-300 bg-white cursor-pointer'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={Boolean(isEmbossed && selectedPaper.hasEmbossed)}
+                    disabled={!selectedPaper.hasEmbossed}
+                    onChange={(e) => setIsEmbossed(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                    isEmbossed && selectedPaper.hasEmbossed
+                      ? 'border-sky-500 bg-sky-500 text-white'
+                      : 'border-slate-300 bg-white'
+                  }`}>
+                    {isEmbossed && selectedPaper.hasEmbossed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-xs font-bold text-slate-900">Embossed 3D</span>
+                      <span className="text-[10px] font-extrabold font-mono text-sky-900 bg-sky-100/70 border border-sky-200/80 px-1.5 py-0.2 rounded">
+                        +₹32/sqft
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                      {selectedPaper.hasEmbossed 
+                        ? 'Tactile raised 3D texture on key artwork motifs' 
+                        : 'Not available for this substrate'}
+                    </p>
+                  </div>
+                </label>
+
+                {/* Golden Foil Checkbox */}
+                <label
+                  className={`p-3.5 rounded-2xl border-2 transition-all flex items-start gap-3 select-none cursor-pointer ${
+                    isGoldFoil
+                      ? 'border-amber-500 bg-amber-50/60 ring-2 ring-amber-500/20 shadow-xs'
+                      : 'border-slate-200 hover:border-amber-300 bg-white'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isGoldFoil}
+                    onChange={(e) => setIsGoldFoil(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                    isGoldFoil
+                      ? 'border-amber-500 bg-amber-500 text-white'
+                      : 'border-slate-300 bg-white'
+                  }`}>
+                    {isGoldFoil && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-xs font-bold text-slate-900">Golden Foil</span>
+                      <span className="text-[10px] font-extrabold font-mono text-amber-900 bg-amber-100/80 border border-amber-300/80 px-1.5 py-0.2 rounded">
+                        {selectedPaper.id === 'gold-foil-on-non-woven' ? 'Included' : '+₹48/sqft'}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                      Opulent metallic gold leaf accent highlights
+                    </p>
+                  </div>
+                </label>
+
+              </div>
+            </div>
+
+            {/* Step 3: Wall Dimensions Input */}
             <div className="space-y-3 pt-3 border-t border-slate-100">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-900">
-                  2. Enter Wall Dimensions
+                  3. Enter Wall Dimensions
                 </label>
 
                 {/* Unit selector buttons */}
@@ -373,19 +520,56 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Calculated Totals */}
-              <div className="bg-sky-50/60 rounded-2xl p-4 border border-sky-200/60 space-y-1.5 text-slate-900">
+              <div className="bg-sky-50/70 rounded-2xl p-4 border border-sky-200/80 space-y-2 text-slate-900 shadow-2xs">
                 <div className="text-xs font-semibold text-slate-600 flex justify-between">
-                  <span>Total Wall Area:</span>
+                  <span>Actual Wall Area:</span>
                   <span className="font-bold text-slate-900">{roundedSqFt} Sq. Ft.</span>
                 </div>
-                <div className="text-sm font-bold text-slate-900 flex justify-between items-baseline pt-1 border-t border-sky-200/50">
-                  <span>Calculated Total Price:</span>
+
+                {isMinBillApplied && (
+                  <div className="bg-amber-50/90 border border-amber-200/80 rounded-xl px-2.5 py-1.5 flex items-center justify-between text-[11px] text-amber-900">
+                    <span className="font-medium">Billable Area (Min. 12 Sq. Ft.):</span>
+                    <span className="font-extrabold font-mono text-amber-950">12.00 Sq. Ft.</span>
+                  </div>
+                )}
+                
+                <div className="text-xs font-semibold text-slate-600 flex justify-between items-center">
+                  <span>Selected Rate:</span>
+                  <div className="text-right">
+                    <span className="font-bold text-sky-950 font-mono text-sm">
+                      ₹{currentPricePerSqFt}/sqft
+                    </span>
+                    <span className="text-[10px] text-slate-500 block font-normal">
+                      (Base ₹{baseRate}{embossRate ? ` + Emboss ₹${embossRate}` : ''}{foilRate ? ` + Foil ₹${foilRate}` : ''})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-xs font-semibold text-slate-600 flex justify-between items-center pt-1 border-t border-sky-200/40">
+                  <span>Finish Specifications:</span>
+                  <span className="font-bold text-slate-900 text-right text-[11px]">
+                    {selectedFinishText}
+                  </span>
+                </div>
+
+                <div className="text-sm font-bold text-slate-900 flex justify-between items-baseline pt-1.5 border-t border-sky-200/60">
+                  <div>
+                    <span className="block">Calculated Total Price:</span>
+                    {isMinBillApplied && (
+                      <span className="text-[10px] text-amber-800 font-semibold block leading-none">
+                        (Billed for min. 12 sq.ft @ ₹{currentPricePerSqFt}/sqft)
+                      </span>
+                    )}
+                  </div>
                   <span className="text-2xl font-serif font-extrabold text-slate-900">₹{totalCost.toLocaleString('en-IN')}</span>
                 </div>
+                <p className="text-[10px] text-slate-500 pt-0.5">
+                  ✓ Custom made-to-measure on <strong>{selectedPaper.name}</strong> ({selectedPaper.width} Roll Width) • Min. bill 12 sq.ft
+                </p>
               </div>
             </div>
 
-            {/* Step 3: Add to Cart Action */}
+            {/* Step 4: Add to Cart Action */}
             <button
               type="button"
               onClick={handleAddToCart}

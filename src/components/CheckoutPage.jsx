@@ -488,8 +488,8 @@ export default function CheckoutPage() {
                       <div className="flex-1 min-w-0">
                         <h4 className="font-serif font-bold text-xs text-slate-900 truncate">{item.title}</h4>
                         <div className="text-[11px] text-slate-600 mt-0.5 space-y-0.5">
-                          <p>Size: {item.widthFt} × {item.heightFt} ({item.totalSqFt} sq ft)</p>
-                          <p>Texture: {item.paperOption.name}</p>
+                          <p>Size: {item.widthFt} × {item.heightFt} ({item.totalSqFt} sq ft{item.isMinBillApplied || (item.totalSqFt && item.totalSqFt < 12) ? ' • min. 12 sq.ft billed' : ''})</p>
+                          <p>Texture: {item.paperOption.name}{item.paperOption.selectedFinish ? ` (${item.paperOption.selectedFinish})` : ''}{item.paperOption.width ? ` • ${item.paperOption.width}` : ''}</p>
                           <p className="text-sky-900 font-semibold">Qty: {item.quantity || 1}</p>
                         </div>
                       </div>
