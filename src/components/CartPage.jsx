@@ -229,8 +229,8 @@ export default function CartPage() {
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900">100% Encrypted Checkout</h4>
-                    <p className="text-[11px] text-slate-500">Protected by Razorpay Security</p>
+                    <h4 className="text-xs font-bold text-slate-900">100% Free Reprint Guarantee</h4>
+                    <p className="text-[11px] text-slate-500">Zero-cost redispatch on printing errors</p>
                   </div>
                 </div>
               </div>
@@ -280,7 +280,7 @@ export default function CartPage() {
                   to="/checkout"
                   className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 rounded-2xl shadow-md shadow-sky-500/25 hover:shadow-lg transition flex items-center justify-center gap-2 group text-base cursor-pointer"
                 >
-                  <span>Proceed to Pay & Place Order</span>
+                  <span>Proceed to Custom Order Checkout</span>
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
 
@@ -288,10 +288,10 @@ export default function CartPage() {
                 <div className="bg-sky-50/60 border border-sky-200/60 rounded-2xl p-3.5 text-center space-y-1">
                   <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-sky-900">
                     <ShieldCheck className="w-4 h-4 text-sky-600" />
-                    <span>Safe & Encrypted Gateway</span>
+                    <span>Bespoke Quality Assurance</span>
                   </div>
                   <p className="text-[11px] text-slate-500">
-                    Supports UPI, Credit/Debit Cards, Net Banking & Wallets
+                    Direct custom roll verification & free reprint warranty
                   </p>
                 </div>
 

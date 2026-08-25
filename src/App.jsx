@@ -23,6 +23,10 @@ const CartPage = lazy(() => import('./components/CartPage'));
 const CheckoutPage = lazy(() => import('./components/CheckoutPage'));
 const OrdersPage = lazy(() => import('./components/OrdersPage'));
 const ProfilePage = lazy(() => import('./components/ProfilePage'));
+const RefundPolicyPage = lazy(() => import('./components/RefundPolicyPage'));
+const ShippingPolicyPage = lazy(() => import('./components/ShippingPolicyPage'));
+const TermsPolicyPage = lazy(() => import('./components/TermsPolicyPage'));
+const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
 
 // Luxury Loading Suspense Fallback
 function PageLoadingSkeleton() {
@@ -354,6 +358,11 @@ function MainCatalogRoutes() {
         <Route path="/product/:productId" element={<ProductDetailPage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/refund-policy" element={<RefundPolicyPage />} />
+        <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
+        <Route path="/terms" element={<TermsPolicyPage />} />
+        <Route path="/terms-and-conditions" element={<TermsPolicyPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="/category/:themeSlug" element={<CatalogContent />} />
         <Route path="/room/:roomSlug" element={<CatalogContent />} />
         <Route path="/wishlist" element={<CatalogContent />} />

@@ -27,62 +27,39 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (cartItems.length === 0) return;
 
+    if (!name || !phone || !address || !city || !pincode) {
+      setErrorMessage('Please fill in all mandatory delivery details.');
+      return;
+    }
+
     setErrorMessage('');
     setLoading(true);
 
-    const apiBase = import.meta.env.VITE_API_URL || '';
-
-    // Handle Online Payments via Razorpay Standard Checkout
     try {
       // Step 1: Ensure Razorpay SDK is loaded
       const isLoaded = await loadRazorpayScript();
       if (!isLoaded || !window.Razorpay) {
-        setErrorMessage('Failed to load Razorpay payment gateway. Please check your internet connection and try again.');
+        setErrorMessage('Unable to load Razorpay payment gateway. Please check your internet connection and try again.');
         setLoading(false);
         return;
       }
 
-      // Step 2: Call Backend to Create Razorpay Order if backend is available
-      const amountInPaise = Math.max(100, Math.round(subtotal * 100));
-      let razorpayOrderId = null;
-      let orderAmount = amountInPaise;
-      let orderCurrency = 'INR';
-
-      try {
-        const createOrderRes = await fetch(`${apiBase}/api/create-order`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: amountInPaise,
-            currency: 'INR',
-            receipt: `rcpt_${Date.now()}`
-          })
-        });
-
-        if (createOrderRes.ok) {
-          const orderData = await createOrderRes.json();
-          razorpayOrderId = orderData.order_id || orderData.id;
-          if (orderData.amount) orderAmount = orderData.amount;
-          if (orderData.currency) orderCurrency = orderData.currency;
-        }
-      } catch (apiErr) {
-        console.warn('Backend order endpoint not reachable, proceeding with standard client checkout:', apiErr);
-      }
-
-      // Step 3: Open Razorpay Standard Checkout Modal
       const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TTbiP0afZW3w2T';
+      const amountInPaise = Math.max(100, Math.round(subtotal * 100));
+      const orderId = 'LIV-' + Math.floor(100000 + Math.random() * 900000);
+      const trackingNo = 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000);
 
+      // Step 2: Configure Razorpay Checkout
       const options = {
         key: razorpayKeyId,
-        amount: orderAmount,
-        currency: orderCurrency,
+        amount: amountInPaise,
+        currency: 'INR',
         name: 'LIVORA Wallpaper Studio',
-        description: `Custom Wall Murals & Wallpapers (${cartItems.length} item${cartItems.length > 1 ? 's' : ''})`,
+        description: `Custom Wall Murals & Wallpapers (${cartItems.length} roll set${cartItems.length > 1 ? 's' : ''})`,
         image: 'https://livorawallcovering.com/favicon.svg',
-        ...(razorpayOrderId ? { order_id: razorpayOrderId } : {}),
         prefill: {
           name: name,
-          email: email,
+          email: email || '',
           contact: phone
         },
         notes: {
@@ -98,61 +75,31 @@ export default function CheckoutPage() {
             setLoading(true);
             setErrorMessage('');
 
-            let verifiedOrder = null;
-
-            // Step 4: Verify Payment Signature if backend is available
-            if (response.razorpay_signature) {
-              try {
-                const verifyRes = await fetch(`${apiBase}/api/verify-payment`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    razorpay_order_id: response.razorpay_order_id || razorpayOrderId,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                    customer: {
-                      userId: user?.id || 'GUEST',
-                      name,
-                      email,
-                      phone,
-                      address: `${address}, ${city}, ${stateName} - ${pincode}`
-                    },
-                    items: cartItems,
-                    totalAmount: subtotal
-                  })
-                });
-
-                if (verifyRes.ok) {
-                  const verifyData = await verifyRes.json().catch(() => ({}));
-                  if (verifyData.success && verifyData.order) {
-                    verifiedOrder = verifyData.order;
-                  }
-                }
-              } catch (verifyErr) {
-                console.warn('Backend verification endpoint not reachable, saving order locally:', verifyErr);
-              }
-            }
-
-            // Payment verified and order created
-            const successOrder = verifiedOrder || {
-              id: 'LIV-' + Math.floor(100000 + Math.random() * 900000),
+            // Step 3: ONLY punch and confirm the order AFTER successful Razorpay payment
+            const successOrder = {
+              id: orderId,
               createdAt: new Date().toISOString(),
               customer: {
                 userId: user?.id || 'GUEST',
                 name,
-                email,
+                email: email || '',
                 phone,
-                address: `${address}, ${city}, ${stateName} - ${pincode}`
+                address: `${address}, ${city}, ${stateName} - ${pincode}`,
+                city,
+                state: stateName,
+                pincode
               },
               items: cartItems,
               totalAmount: subtotal,
               paymentDetails: {
                 method: 'RAZORPAY',
                 paymentId: response.razorpay_payment_id,
-                orderId: response.razorpay_order_id || razorpayOrderId || ''
+                orderId: response.razorpay_order_id || '',
+                signature: response.razorpay_signature || '',
+                status: 'PAID'
               },
               status: 'PAID',
-              trackingNumber: 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000)
+              trackingNumber: trackingNo
             };
 
             // Save order to Firestore Database
@@ -162,7 +109,7 @@ export default function CheckoutPage() {
               console.warn('Error saving order to Firestore:', fsErr);
             }
 
-            // Always save to localStorage for offline / instant order tracking
+            // Save to localStorage for instant user order tracking
             try {
               const userOrdersKey = `livora_orders_${user?.id || 'guest'}`;
               const existing = JSON.parse(localStorage.getItem(userOrdersKey) || '[]');
@@ -174,16 +121,16 @@ export default function CheckoutPage() {
             clearCart();
             setOrderSuccess(successOrder);
             navigate('/');
-          } catch (verifyErr) {
-            console.error('Signature verification call failed:', verifyErr);
-            setErrorMessage('Network error while confirming payment. Please contact support with Payment ID: ' + response.razorpay_payment_id);
+          } catch (punchErr) {
+            console.error('Error creating order after payment:', punchErr);
+            setErrorMessage('Payment received with ID: ' + response.razorpay_payment_id + '. Please contact support to confirm order details.');
             setLoading(false);
           }
         },
         modal: {
           ondismiss: function () {
             setLoading(false);
-            setErrorMessage('Payment window was closed. You can complete your order anytime.');
+            setErrorMessage('Payment window was closed. Complete payment to confirm your custom wallpaper order.');
           }
         }
       };
@@ -199,7 +146,7 @@ export default function CheckoutPage() {
       rzp.open();
     } catch (err) {
       console.error('Payment processing error:', err);
-      setErrorMessage(err.message || 'Unable to start checkout. Please try again.');
+      setErrorMessage(err.message || 'Unable to open payment gateway. Please try again.');
       setLoading(false);
     }
   };
@@ -394,7 +341,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Step 2: Razorpay Payment Method */}
+              {/* Step 2: Razorpay Payment Gateway */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
                 <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
                   <span className="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">2</span>
@@ -457,6 +404,20 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Refund & Custom Sizing Notice */}
+                <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-xs text-amber-900 space-y-1">
+                  <p className="font-bold flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                    <span>Custom Made-to-Order Policy:</span>
+                  </p>
+                  <p className="text-[11px] leading-relaxed text-amber-800 pl-5">
+                    All wallpapers are printed custom to your exact dimensions. Orders once processed cannot be cancelled or refunded. However, <strong>in case of any printing defect or transit damage, we will reprint and redispatch a brand new wallpaper at zero cost</strong>.{' '}
+                    <Link to="/refund-policy" target="_blank" className="underline font-bold hover:text-amber-950">
+                      Read Full Refund & Reprint Policy
+                    </Link>
+                  </p>
                 </div>
 
               </div>
@@ -531,10 +492,10 @@ export default function CheckoutPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 rounded-2xl shadow-md shadow-sky-500/25 transition flex items-center justify-center gap-2 group text-base cursor-pointer"
+                  className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 rounded-2xl shadow-md shadow-sky-500/25 transition flex items-center justify-center gap-2 group text-base cursor-pointer active:scale-[0.99]"
                 >
                   <Lock className="w-5 h-5" />
-                  <span>{loading ? 'Opening Razorpay Gateway...' : `Pay ₹${subtotal.toLocaleString('en-IN')} & Confirm`}</span>
+                  <span>{loading ? 'Opening Razorpay Gateway...' : `Pay ₹${subtotal.toLocaleString('en-IN')} with Razorpay`}</span>
                 </button>
 
                 {/* Trust Badges */}
@@ -545,7 +506,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Award className="w-4 h-4 text-sky-700 shrink-0" />
-                    <span>Custom Non-Fade Premium Quality Guarantee</span>
+                    <span>Free Reprint Guarantee on Any Printing Defect</span>
                   </div>
                 </div>
 

@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className="bg-white text-slate-700 border-t border-slate-100 pt-16 pb-12 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           
           {/* Col 1: Brand Info */}
           <div className="space-y-4">
@@ -35,15 +35,37 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Col 3: Paper Options */}
+          {/* Col 3: Customer Policies & Trust */}
           <div className="space-y-3 text-xs">
-            <h4 className="font-serif font-bold text-sm text-slate-900 uppercase tracking-wider">Paper Qualities</h4>
+            <h4 className="font-serif font-bold text-sm text-slate-900 uppercase tracking-wider">Client Protection</h4>
             <ul className="space-y-2 text-slate-600">
-              <li><span className="text-slate-900 font-semibold">Non Woven Wallpaper (59")</span> — ₹40/sqft</li>
-              <li><span className="text-slate-900 font-semibold">HD PVC Paper (59")</span> — ₹40/sqft</li>
-              <li><span className="text-slate-900 font-semibold">Non Tearable Feather (50")</span> — ₹56/sqft</li>
-              <li><span className="text-slate-900 font-semibold">Pure Canvas Jointless (122")</span> — ₹96/sqft</li>
-              <li><span className="text-slate-900 font-semibold">Gold Foil on Non Woven</span> — ₹88/sqft</li>
+              <li>
+                <Link to="/refund-policy" className="text-sky-800 font-bold hover:underline flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>Refund & Reprint Policy</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/shipping-policy" className="hover:text-sky-900 transition flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                  <span>Shipping & Delivery (Free PAN-India)</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="hover:text-sky-900 transition flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                  <span>Terms & Conditions</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy-policy" className="hover:text-sky-900 transition flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                  <span>Privacy Policy</span>
+                </Link>
+              </li>
+              <li className="pt-2 text-[11px] text-slate-500 leading-snug">
+                Made-to-Measure Guarantee: 100% Free Reprint on Any Printing Defects.
+              </li>
             </ul>
           </div>
 
@@ -70,7 +92,13 @@ export default function Footer() {
 
         {/* Bottom copyright */}
         <div className="pt-8 border-t border-slate-100 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} LIVORA Wallpaper Studio. All Rights Reserved.</p>
+          <div className="flex flex-wrap items-center gap-4 text-slate-500">
+            <p>© {new Date().getFullYear()} LIVORA Wallpaper Studio. All Rights Reserved.</p>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/refund-policy" className="hover:text-sky-800">Refund & Reprint Policy</Link>
+            <span>•</span>
+            <Link to="/shipping-policy" className="hover:text-sky-800">Shipping Policy</Link>
+          </div>
           <div className="flex items-center gap-1">
             <span>Crafted with</span>
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-current" />

@@ -584,6 +584,23 @@ export default function ProductDetailPage() {
               <span>{hasDimensions ? 'ADD TO CART & VIEW CART' : 'ENTER DIMENSIONS TO CONTINUE'}</span>
             </button>
 
+            {/* Custom Made-to-Measure & Free Reprint Guarantee Banner */}
+            <div className="bg-sky-50/70 border border-sky-200/80 rounded-2xl p-3.5 space-y-2 text-[11px] text-slate-700">
+              <div className="flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-slate-900">100% Free Reprint Guarantee: </span>
+                  <span>Any printing error, dimension mismatch, or transit damage is reprinted and redispatched at zero cost.</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between pt-1 border-t border-sky-200/50 text-[10px] text-slate-500">
+                <span>Custom Made-to-Measure Wallpapers</span>
+                <Link to="/refund-policy" target="_blank" className="font-bold text-sky-800 hover:underline">
+                  View Policy →
+                </Link>
+              </div>
+            </div>
+
           </div>
 
         </div>
