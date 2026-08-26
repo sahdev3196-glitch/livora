@@ -93,7 +93,7 @@ export default function SEOSection() {
             </div>
             <h3 className="font-serif font-bold text-base text-slate-900">Pan-India Express</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Free doorstep express delivery across Pune, Mumbai, Delhi, Bengaluru, and all cities in reinforced tube packaging.
+              Insured doorstep express delivery across Pune, Mumbai, Delhi, Bengaluru, and all cities in reinforced tube packaging.
             </p>
           </div>
 

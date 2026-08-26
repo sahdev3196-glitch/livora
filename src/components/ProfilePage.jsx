@@ -7,7 +7,7 @@ import Header from './Header';
 import Footer from './Footer';
 
 export default function ProfilePage() {
-  const { user, updateUserProfile, setIsAuthOpen } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const { userLocation, requestLocation, loading: geoLoading } = useUserLocation();
 
   const [name, setName] = useState('');
@@ -109,12 +109,12 @@ export default function ProfilePage() {
                 Log in with your account to view and update your saved shipping address for faster checkout.
               </p>
             </div>
-            <button
-              onClick={() => setIsAuthOpen(true)}
+            <Link
+              to="/login?redirect=/profile"
               className="inline-flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold px-8 py-3.5 rounded-2xl shadow-md shadow-sky-500/25 transition text-sm cursor-pointer"
             >
               <span>Sign In / Register</span>
-            </button>
+            </Link>
           </div>
         ) : (
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-6">

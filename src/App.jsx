@@ -9,7 +9,6 @@ import ShopByThemes from './components/ShopByThemes';
 import ShopByRoom from './components/ShopByRoom';
 import ProductCard from './components/ProductCard';
 import ReelsShowcase from './components/ReelsShowcase';
-import AuthModal from './components/AuthModal';
 import LocationPermissionModal from './components/LocationPermissionModal';
 import OrderSuccessModal from './components/OrderSuccessModal';
 import SEOSection from './components/SEOSection';
@@ -21,6 +20,7 @@ import { Sparkles, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 const ProductDetailPage = lazy(() => import('./components/ProductDetailPage'));
 const CartPage = lazy(() => import('./components/CartPage'));
 const CheckoutPage = lazy(() => import('./components/CheckoutPage'));
+const LoginPage = lazy(() => import('./components/LoginPage'));
 const OrdersPage = lazy(() => import('./components/OrdersPage'));
 const ProfilePage = lazy(() => import('./components/ProfilePage'));
 const RefundPolicyPage = lazy(() => import('./components/RefundPolicyPage'));
@@ -338,9 +338,6 @@ function CatalogContent() {
       {/* Footer */}
       <Footer />
 
-      {/* Auth Modal */}
-      <AuthModal />
-
       {/* Order Confirmation Invoice Modal */}
       <OrderSuccessModal />
 
@@ -355,6 +352,7 @@ function MainCatalogRoutes() {
         <Route path="/" element={<CatalogContent />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/product/:productId" element={<ProductDetailPage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/profile" element={<ProfilePage />} />

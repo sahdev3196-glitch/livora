@@ -13,6 +13,9 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const deliveryCharge = 200;
+  const totalPayable = subtotal + deliveryCharge;
+
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
@@ -23,9 +26,23 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  React.useEffect(() => {
+    if (user) {
+      if (!name && user.name) setName(user.name);
+      if (!email && user.email) setEmail(user.email);
+      if (!phone && user.phone) setPhone(user.phone);
+    }
+  }, [user]);
+
   const handleProcessPayment = async (e) => {
     e.preventDefault();
     if (cartItems.length === 0) return;
+
+    if (!user) {
+      setErrorMessage('Please sign in with Google to place your bespoke wallpaper order.');
+      navigate('/login?redirect=/checkout');
+      return;
+    }
 
     if (!name || !phone || !address || !city || !pincode) {
       setErrorMessage('Please fill in all mandatory delivery details.');
@@ -45,7 +62,7 @@ export default function CheckoutPage() {
       }
 
       const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TTbiP0afZW3w2T';
-      const amountInPaise = Math.max(100, Math.round(subtotal * 100));
+      const amountInPaise = Math.max(100, Math.round(totalPayable * 100));
       const orderId = 'LIV-' + Math.floor(100000 + Math.random() * 900000);
       const trackingNo = 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000);
 
@@ -90,7 +107,9 @@ export default function CheckoutPage() {
                 pincode
               },
               items: cartItems,
-              totalAmount: subtotal,
+              subtotal: subtotal,
+              deliveryCharge: deliveryCharge,
+              totalAmount: totalPayable,
               paymentDetails: {
                 method: 'RAZORPAY',
                 paymentId: response.razorpay_payment_id,
@@ -218,6 +237,27 @@ export default function CheckoutPage() {
             {/* Left Column: Form Steps (7 cols) */}
             <div className="lg:col-span-7 space-y-6">
               
+              {/* Sign-in Required Notification Banner */}
+              {!user && (
+                <div className="bg-gradient-to-r from-sky-50 to-blue-50/70 border-2 border-sky-200 text-sky-950 p-5 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-sky-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-serif font-bold text-base text-slate-900">Sign-in Required to Place Order</h4>
+                      <p className="text-xs text-slate-600">Please sign in with Google to confirm and track your custom wallpaper order.</p>
+                    </div>
+                  </div>
+                  <Link
+                    to="/login?redirect=/checkout"
+                    className="bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs px-5 py-3 rounded-2xl transition shadow-md shadow-sky-500/20 cursor-pointer shrink-0"
+                  >
+                    Sign In with Google
+                  </Link>
+                </div>
+              )}
+
               {/* Error Notification Banner */}
               {errorMessage && (
                 <div className="bg-rose-50 border border-rose-200 text-rose-800 px-5 py-4 rounded-2xl flex items-start gap-3 shadow-xs">
@@ -468,8 +508,8 @@ export default function CheckoutPage() {
                     <span className="font-semibold text-slate-900">₹{subtotal.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
-                    <span>Express Delivery Across India</span>
-                    <span className="text-sky-700 font-bold">FREE</span>
+                    <span>Delivery Charge</span>
+                    <span className="font-semibold text-slate-900">₹{deliveryCharge}</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>GST & Packaging</span>
@@ -481,10 +521,10 @@ export default function CheckoutPage() {
                 <div className="pt-3 border-t border-slate-100 flex justify-between items-end">
                   <div>
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Total Payable</span>
-                    <span className="text-[11px] text-sky-700 font-semibold">Free Express Shipping Applied</span>
+                    <span className="text-[11px] text-slate-500 font-medium">Incl. all taxes & delivery</span>
                   </div>
                   <span className="font-serif font-extrabold text-2xl text-slate-900">
-                    ₹{subtotal.toLocaleString('en-IN')}
+                    ₹{totalPayable.toLocaleString('en-IN')}
                   </span>
                 </div>
 
@@ -495,7 +535,13 @@ export default function CheckoutPage() {
                   className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 rounded-2xl shadow-md shadow-sky-500/25 transition flex items-center justify-center gap-2 group text-base cursor-pointer active:scale-[0.99]"
                 >
                   <Lock className="w-5 h-5" />
-                  <span>{loading ? 'Opening Razorpay Gateway...' : `Pay ₹${subtotal.toLocaleString('en-IN')} with Razorpay`}</span>
+                  <span>
+                    {loading
+                      ? 'Opening Razorpay Gateway...'
+                      : !user
+                      ? 'Sign In with Google to Order'
+                      : `Pay ₹${totalPayable.toLocaleString('en-IN')} with Razorpay`}
+                  </span>
                 </button>
 
                 {/* Trust Badges */}

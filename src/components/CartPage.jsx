@@ -1,12 +1,15 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Trash2, ArrowRight, Sparkles, ShieldCheck, Ruler, ChevronRight, Plus, Minus, ArrowLeft, Truck, Award } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import Header from './Header';
 import Footer from './Footer';
 
 export default function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, subtotal } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-slate-50/40 flex flex-col font-sans text-slate-800">
@@ -79,17 +82,6 @@ export default function CartPage() {
             {/* Left Column: Cart Items List (8 cols) */}
             <div className="lg:col-span-8 space-y-4">
               
-              {/* Free Shipping Highlight Banner */}
-              <div className="bg-sky-50/90 rounded-2xl p-4 border border-sky-200/80 text-xs font-semibold text-sky-900 flex items-center justify-between gap-3 shadow-xs">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-sky-600 shrink-0" />
-                  <span>🎉 <strong>Free Express Shipping Unlocked!</strong> Delivered to your doorstep across India.</span>
-                </div>
-                <span className="hidden sm:inline-block bg-sky-200/70 text-sky-950 font-bold px-2.5 py-1 rounded-full text-[11px]">
-                  PAN India Delivery
-                </span>
-              </div>
-
               {/* Items Card List */}
               <div className="space-y-4">
                 {cartItems.map((item) => (
@@ -209,7 +201,7 @@ export default function CartPage() {
                     <Truck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900">Free Express Delivery</h4>
+                    <h4 className="text-xs font-bold text-slate-900">Insured Express Delivery</h4>
                     <p className="text-[11px] text-slate-500">Shipped in heavy-duty protective rolls</p>
                   </div>
                 </div>
@@ -253,8 +245,8 @@ export default function CartPage() {
 
                   <div className="flex justify-between items-center text-slate-600">
                     <span>Estimated Shipping</span>
-                    <span className="bg-sky-50 text-sky-700 font-bold border border-sky-200/80 text-xs px-2.5 py-0.5 rounded-full">
-                      FREE
+                    <span className="text-xs text-slate-500 font-medium">
+                      Calculated at checkout
                     </span>
                   </div>
 
@@ -267,8 +259,8 @@ export default function CartPage() {
                 {/* Total Row */}
                 <div className="pt-4 border-t border-slate-100 flex justify-between items-end">
                   <div>
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Total Amount</span>
-                    <span className="text-xs text-sky-700 font-semibold">Saved ₹1,200 on Shipping</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Items Subtotal</span>
+                    <span className="text-xs text-slate-400 font-medium">+ ₹200 delivery at checkout</span>
                   </div>
                   <span className="font-serif font-extrabold text-2xl sm:text-3xl text-slate-900">
                     ₹{subtotal.toLocaleString('en-IN')}
@@ -276,13 +268,20 @@ export default function CartPage() {
                 </div>
 
                 {/* Checkout Action Button */}
-                <Link
-                  to="/checkout"
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!user) {
+                      navigate('/login?redirect=/checkout');
+                    } else {
+                      navigate('/checkout');
+                    }
+                  }}
                   className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 rounded-2xl shadow-md shadow-sky-500/25 hover:shadow-lg transition flex items-center justify-center gap-2 group text-base cursor-pointer"
                 >
-                  <span>Proceed to Custom Order Checkout</span>
+                  <span>{user ? 'Proceed to Custom Order Checkout' : 'Login to Proceed to Checkout'}</span>
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                </button>
 
                 {/* Secure Badge */}
                 <div className="bg-sky-50/60 border border-sky-200/60 rounded-2xl p-3.5 text-center space-y-1">

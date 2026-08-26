@@ -7,12 +7,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('livora_token') || null);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const openAuth = () => {
-    setIsAuthOpen(true);
-  };
 
   useEffect(() => {
     const savedUser = localStorage.getItem('livora_user');
@@ -63,7 +58,6 @@ export const AuthProvider = ({ children }) => {
       setToken(googleToken);
       localStorage.setItem('livora_token', googleToken);
       localStorage.setItem('livora_user', JSON.stringify(googleUser));
-      setIsAuthOpen(false);
       return { success: true };
     } catch (err) {
       console.error("Google Auth error:", err);
@@ -96,9 +90,6 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         token,
-        isAuthOpen,
-        setIsAuthOpen,
-        openAuth,
         googleLogin,
         updateUserProfile,
         logout,

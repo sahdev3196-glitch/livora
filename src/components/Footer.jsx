@@ -48,7 +48,7 @@ export default function Footer() {
               <li>
                 <Link to="/shipping-policy" className="hover:text-sky-900 transition flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                  <span>Shipping & Delivery (Free PAN-India)</span>
+                  <span>Shipping & Delivery Policy</span>
                 </Link>
               </li>
               <li>

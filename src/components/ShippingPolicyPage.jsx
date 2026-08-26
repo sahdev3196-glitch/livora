@@ -77,9 +77,9 @@ export default function ShippingPolicyPage() {
               <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-800 flex items-center justify-center font-bold">
                 <PackageCheck className="w-5 h-5" />
               </div>
-              <h3 className="font-serif font-bold text-sm text-slate-900">Zero Shipping Fee</h3>
+              <h3 className="font-serif font-bold text-sm text-slate-900">Express Delivery</h3>
               <p className="text-xs text-slate-600">
-                We provide <strong>100% Free Shipping</strong> on all custom wallpaper orders anywhere across India.
+                A flat ₹200 express shipping fee is added at checkout for insured, protective roll packaging and doorstep courier delivery across India.
               </p>
             </div>
           </div>

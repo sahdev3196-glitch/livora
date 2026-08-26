@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Heart, Star, Sparkles, Ruler, ChevronRight, ChevronLeft, ChevronDown, ArrowLeft, Check, ShieldCheck, Truck, Award, ShoppingBag, Info } from 'lucide-react';
 import { PAPER_OPTIONS, INITIAL_WALLPAPERS } from '../data/wallpapers';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import ProductCard from './ProductCard';
 import Header from './Header';
 import Footer from './Footer';
@@ -11,6 +12,7 @@ export default function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { addToCart, wishlist, toggleWishlist } = useCart();
+  const { user } = useAuth();
   const scrollRef = useRef(null);
 
   const [product, setProduct] = useState(null);
@@ -137,6 +139,10 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!hasDimensions) return;
+    if (!user) {
+      navigate(`/login?redirect=${encodeURIComponent(`/product/${product.id}`)}`);
+      return;
+    }
     addToCart(product, {
       widthFt: `${wNum} ${unit}`,
       heightFt: `${hNum} ${unit}`,
@@ -262,7 +268,7 @@ export default function ProductDetailPage() {
                   <Truck className="w-4.5 h-4.5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900">Free PAN India</h4>
+                  <h4 className="text-xs font-bold text-slate-900">PAN India Delivery</h4>
                   <p className="text-[10px] text-slate-500">Express doorstep delivery</p>
                 </div>
               </div>
@@ -581,7 +587,7 @@ export default function ProductDetailPage() {
               }`}
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>{hasDimensions ? 'ADD TO CART & VIEW CART' : 'ENTER DIMENSIONS TO CONTINUE'}</span>
+              <span>{hasDimensions ? (user ? 'ADD TO CART & VIEW CART' : 'LOGIN TO ADD TO CART') : 'ENTER DIMENSIONS TO CONTINUE'}</span>
             </button>
 
             {/* Custom Made-to-Measure & Free Reprint Guarantee Banner */}

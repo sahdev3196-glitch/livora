@@ -7,7 +7,7 @@ import Header from './Header';
 import Footer from './Footer';
 
 export default function OrdersPage() {
-  const { user, token, setIsAuthOpen } = useAuth();
+  const { user, token } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -117,12 +117,12 @@ export default function OrdersPage() {
                 Log in with your LIVORA account to track custom wallpaper printing status, shipping details, and download tax invoices.
               </p>
             </div>
-            <button
-              onClick={() => setIsAuthOpen(true)}
+            <Link
+              to="/login?redirect=/orders"
               className="inline-flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold px-8 py-3.5 rounded-2xl shadow-md shadow-sky-500/25 transition text-sm cursor-pointer"
             >
               <span>Sign In / Create Account</span>
-            </button>
+            </Link>
           </div>
         ) : loading ? (
           /* Loading State */
