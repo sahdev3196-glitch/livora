@@ -16,32 +16,39 @@ export default function OrdersPage() {
     if (user) {
       fetchUserOrders();
     } else {
+      setOrders([]);
+      setSelectedOrder(null);
       setLoading(false);
     }
   }, [user]);
 
   const fetchUserOrders = async () => {
+    if (!user?.id && !user?.email) {
+      setOrders([]);
+      setSelectedOrder(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     let userOrders = [];
     try {
       // 1. Check local cache first for instant responsiveness
-      const userOrdersKey = `livora_orders_${user?.id || 'guest'}`;
+      const userOrdersKey = `livora_orders_${user.id}`;
       const cached = JSON.parse(localStorage.getItem(userOrdersKey) || '[]');
       userOrders = cached;
 
       // 2. Fetch official orders from Firestore Database
-      if (user?.id || user?.email) {
-        const firestoreOrders = await getUserOrdersFromFirestore(user?.id, user?.email);
-        if (firestoreOrders && firestoreOrders.length > 0) {
-          // Merge Firestore orders with cached orders, deduplicating by ID
-          const orderMap = new Map();
-          firestoreOrders.forEach(o => orderMap.set(o.id, o));
-          cached.forEach(o => {
-            if (!orderMap.has(o.id)) orderMap.set(o.id, o);
-          });
-          userOrders = Array.from(orderMap.values());
-          userOrders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-        }
+      const firestoreOrders = await getUserOrdersFromFirestore(user.id, user.email);
+      if (firestoreOrders && firestoreOrders.length > 0) {
+        // Merge Firestore orders with cached orders, deduplicating by ID
+        const orderMap = new Map();
+        firestoreOrders.forEach(o => orderMap.set(o.id, o));
+        cached.forEach(o => {
+          if (!orderMap.has(o.id)) orderMap.set(o.id, o);
+        });
+        userOrders = Array.from(orderMap.values());
+        userOrders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       }
     } catch (err) {
       console.warn('Using local order history:', err);

@@ -101,6 +101,8 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     localStorage.removeItem('livora_token');
     localStorage.removeItem('livora_user');
+    localStorage.removeItem('livora_cart');
+    localStorage.removeItem('livora_wishlist');
   };
 
   return (

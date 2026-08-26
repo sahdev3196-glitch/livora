@@ -16,20 +16,28 @@ export const CartProvider = ({ children }) => {
   const isInitialSyncDone = useRef(false);
 
   const [cartItems, setCartItems] = useState(() => {
+    const savedUser = localStorage.getItem('livora_user');
+    if (!savedUser) return [];
     const saved = localStorage.getItem('livora_cart');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [wishlist, setWishlist] = useState(() => {
+    const savedUser = localStorage.getItem('livora_user');
+    if (!savedUser) return [];
     const saved = localStorage.getItem('livora_wishlist');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [orderSuccess, setOrderSuccess] = useState(null);
 
-  // 1. Fetch & Merge Cart and Wishlist from Firestore whenever user logs in
+  // 1. Reset on logout (if !userId) or Fetch from Firestore when logged in
   useEffect(() => {
     if (!userId) {
+      setCartItems([]);
+      setWishlist([]);
+      localStorage.removeItem('livora_cart');
+      localStorage.removeItem('livora_wishlist');
       isInitialSyncDone.current = false;
       return;
     }
@@ -45,31 +53,13 @@ export const CartProvider = ({ children }) => {
 
         if (!isMounted) return;
 
-        // Merge Cart: Cloud Cart takes precedence; if local has new items, preserve them
-        if (Array.isArray(cloudCart) && cloudCart.length > 0) {
-          setCartItems(prev => {
-            const localOnly = prev.filter(local => !cloudCart.some(c => c.cartId === local.cartId));
-            const merged = [...cloudCart, ...localOnly];
-            localStorage.setItem('livora_cart', JSON.stringify(merged));
-            return merged;
-          });
-        } else if (cartItems.length > 0) {
-          // If cloud cart was empty but local has items from current session, save to Firestore
-          saveUserCartToFirestore(userId, cartItems);
-        }
+        const cartToSet = Array.isArray(cloudCart) ? cloudCart : [];
+        const wishlistToSet = Array.isArray(cloudWishlist) ? cloudWishlist : [];
 
-        // Merge Wishlist
-        if (Array.isArray(cloudWishlist) && cloudWishlist.length > 0) {
-          setWishlist(prev => {
-            const localOnly = prev.filter(local => !cloudWishlist.some(c => c.id === local.id));
-            const merged = [...cloudWishlist, ...localOnly];
-            localStorage.setItem('livora_wishlist', JSON.stringify(merged));
-            return merged;
-          });
-        } else if (wishlist.length > 0) {
-          saveUserWishlistToFirestore(userId, wishlist);
-        }
-
+        setCartItems(cartToSet);
+        setWishlist(wishlistToSet);
+        localStorage.setItem('livora_cart', JSON.stringify(cartToSet));
+        localStorage.setItem('livora_wishlist', JSON.stringify(wishlistToSet));
         isInitialSyncDone.current = true;
       } catch (err) {
         console.warn("Error syncing cloud cart/wishlist:", err);
@@ -83,23 +73,22 @@ export const CartProvider = ({ children }) => {
     };
   }, [userId]);
 
-  // 2. Persist Cart changes to localStorage and Firestore
+  // 2. Persist Cart changes to localStorage and Firestore ONLY for logged in users
   useEffect(() => {
+    if (!userId) return;
     localStorage.setItem('livora_cart', JSON.stringify(cartItems));
-    if (userId) {
-      saveUserCartToFirestore(userId, cartItems);
-    }
+    saveUserCartToFirestore(userId, cartItems);
   }, [cartItems, userId]);
 
-  // 3. Persist Wishlist changes to localStorage and Firestore
+  // 3. Persist Wishlist changes to localStorage and Firestore ONLY for logged in users
   useEffect(() => {
+    if (!userId) return;
     localStorage.setItem('livora_wishlist', JSON.stringify(wishlist));
-    if (userId) {
-      saveUserWishlistToFirestore(userId, wishlist);
-    }
+    saveUserWishlistToFirestore(userId, wishlist);
   }, [wishlist, userId]);
 
   const addToCart = (product, customSpecs) => {
+    if (!userId) return;
     const baseTotal = customSpecs.itemTotal;
     const newItem = {
       cartId: Date.now() + '_' + Math.random().toString(36).substr(2, 4),
@@ -121,6 +110,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const updateQuantity = (cartId, delta) => {
+    if (!userId) return;
     setCartItems(prev => prev.map(item => {
       if (item.cartId === cartId) {
         const newQty = Math.max(1, (item.quantity || 1) + delta);
@@ -137,10 +127,12 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = (cartId) => {
+    if (!userId) return;
     setCartItems(prev => prev.filter(item => item.cartId !== cartId));
   };
 
   const toggleWishlist = (product) => {
+    if (!userId) return;
     setWishlist(prev => {
       const exists = prev.some(item => item.id === product.id);
       if (exists) {
@@ -152,6 +144,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const isWishlisted = (productId) => {
+    if (!userId) return false;
     return wishlist.some(item => item.id === productId);
   };
 

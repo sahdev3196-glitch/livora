@@ -61,19 +61,41 @@ export default function CartPage() {
             </div>
             <div className="space-y-2">
               <h2 className="font-serif font-bold text-xl text-slate-900">
-                Your cart is currently empty
+                {!user ? 'Sign in to view your cart' : 'Your cart is currently empty'}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                Explore our catalog of designer wallpapers, customize wall dimensions in sq ft, and craft your dream wall ambience.
+                {!user
+                  ? 'Your bespoke wallpaper cart is safely stored in your account database. Sign in with Google to retrieve your customized rolls.'
+                  : 'Explore our catalog of designer wallpapers, customize wall dimensions in sq ft, and craft your dream wall ambience.'}
               </p>
             </div>
-            <Link
-              to="/"
-              className="inline-flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold px-7 py-3.5 rounded-2xl shadow-md shadow-sky-500/25 transition text-sm cursor-pointer"
-            >
-              <span>Explore Wallpaper Catalog</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              {!user ? (
+                <>
+                  <Link
+                    to="/login?redirect=/cart"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold px-7 py-3.5 rounded-2xl shadow-md shadow-sky-500/25 transition text-sm cursor-pointer"
+                  >
+                    <span>Sign In with Google</span>
+                  </Link>
+                  <Link
+                    to="/"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-7 py-3.5 rounded-2xl transition text-sm cursor-pointer"
+                  >
+                    <span>Explore Catalog</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  to="/"
+                  className="inline-flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold px-7 py-3.5 rounded-2xl shadow-md shadow-sky-500/25 transition text-sm cursor-pointer"
+                >
+                  <span>Explore Wallpaper Catalog</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
           </div>
         ) : (
           /* Active Cart items Grid */

@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Star, Sparkles, Ruler, ArrowUpRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function ProductCard({ product, compact = false }) {
   const { toggleWishlist, isWishlisted } = useCart();
+  const { user } = useAuth();
   const wishlisted = isWishlisted(product.id);
   const navigate = useNavigate();
   const [hasError, setHasError] = useState(false);
@@ -54,6 +56,10 @@ export default function ProductCard({ product, compact = false }) {
           <button
             onClick={(e) => {
               e.stopPropagation();
+              if (!user) {
+                navigate('/login');
+                return;
+              }
               toggleWishlist(product);
             }}
             className={`rounded-full backdrop-blur-md transition-all duration-300 shadow-xs cursor-pointer ${

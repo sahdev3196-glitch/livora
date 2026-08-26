@@ -1,6 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, useParams, useLocation, useNavigate, Link } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
 import { LocationProvider } from './context/LocationContext';
 import Header from './components/Header';
@@ -44,6 +44,7 @@ function CatalogContent() {
   const [products, setProducts] = useState(INITIAL_WALLPAPERS);
   const [searchQuery, setSearchQuery] = useState('');
   const { wishlist } = useCart();
+  const { user } = useAuth();
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -220,17 +221,54 @@ function CatalogContent() {
 
           {/* Product Grid */}
           {paginatedProducts.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 space-y-3">
-              <Sparkles className="w-10 h-10 text-emerald-500 mx-auto" />
-              <h3 className="font-serif font-bold text-lg text-slate-800">No wallpapers match your filter</h3>
-              <p className="text-xs text-slate-500">Try searching for alternative themes like Pichwai, Tropical, or Room type.</p>
-              <Link
-                to="/"
-                onClick={() => setSearchQuery('')}
-                className="inline-block mt-2 text-xs font-bold text-emerald-800 underline hover:text-emerald-900"
-              >
-                Reset All Filters & View All
-              </Link>
+            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200/80 p-8 space-y-4 max-w-lg mx-auto shadow-xs my-6">
+              {selectedTheme === 'wishlist' ? (
+                <>
+                  <div className="w-16 h-16 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-500 mx-auto shadow-xs">
+                    <Heart className="w-8 h-8 fill-rose-500/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <h3 className="font-serif font-bold text-xl text-slate-900">
+                      {!user ? 'Sign in to view your wishlist' : 'Your Wishlist is empty'}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-500">
+                      {!user
+                        ? 'Your saved wishlist designs are linked to your account in our database. Sign in with Google to view and manage them.'
+                        : 'Explore our catalog and click the heart icon on any bespoke wallpaper design to save it here.'}
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    {!user ? (
+                      <Link
+                        to="/login?redirect=/wishlist"
+                        className="inline-flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold px-7 py-3 rounded-2xl shadow-md shadow-sky-500/25 transition text-sm cursor-pointer"
+                      >
+                        <span>Sign In with Google</span>
+                      </Link>
+                    ) : (
+                      <Link
+                        to="/"
+                        className="inline-flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold px-7 py-3 rounded-2xl shadow-md shadow-sky-500/25 transition text-sm cursor-pointer"
+                      >
+                        <span>Explore Wallpaper Catalog</span>
+                      </Link>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-10 h-10 text-emerald-500 mx-auto" />
+                  <h3 className="font-serif font-bold text-lg text-slate-800">No wallpapers match your filter</h3>
+                  <p className="text-xs text-slate-500">Try searching for alternative themes like Pichwai, Tropical, or Room type.</p>
+                  <Link
+                    to="/"
+                    onClick={() => setSearchQuery('')}
+                    className="inline-block mt-2 text-xs font-bold text-emerald-800 underline hover:text-emerald-900"
+                  >
+                    Reset All Filters & View All
+                  </Link>
+                </>
+              )}
             </div>
           ) : (
             <>

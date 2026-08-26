@@ -207,7 +207,13 @@ export default function ProductDetailPage() {
 
               {/* Wishlist Button Overlay */}
               <button
-                onClick={() => toggleWishlist(product)}
+                onClick={() => {
+                  if (!user) {
+                    navigate(`/login?redirect=${encodeURIComponent(`/product/${product.id}`)}`);
+                    return;
+                  }
+                  toggleWishlist(product);
+                }}
                 className={`absolute top-5 right-5 p-3 rounded-full backdrop-blur-md transition-all duration-300 shadow-md cursor-pointer ${
                   wishlisted
                     ? 'bg-rose-500 text-white scale-110'
