@@ -51,13 +51,31 @@ export const AuthProvider = ({ children }) => {
       const googleUser = firebaseRes.user;
       const googleToken = 'firebase_jwt_' + Date.now();
 
-      // Sync user profile to Firestore
-      await syncUserToFirestore(googleUser);
+      // Retrieve existing Firestore profile (e.g. saved address/phone from other devices)
+      let remoteProfile = null;
+      if (googleUser.id) {
+        try {
+          remoteProfile = await getUserProfileFromFirestore(googleUser.id);
+        } catch (e) {}
+      }
 
-      setUser(googleUser);
+      const mergedUser = remoteProfile 
+        ? { 
+            ...googleUser, 
+            ...remoteProfile, 
+            name: googleUser.name || remoteProfile.name,
+            email: googleUser.email || remoteProfile.email,
+            avatar: googleUser.avatar || remoteProfile.avatar 
+          } 
+        : googleUser;
+
+      // Sync merged user profile to Firestore
+      await syncUserToFirestore(mergedUser);
+
+      setUser(mergedUser);
       setToken(googleToken);
       localStorage.setItem('livora_token', googleToken);
-      localStorage.setItem('livora_user', JSON.stringify(googleUser));
+      localStorage.setItem('livora_user', JSON.stringify(mergedUser));
       return { success: true };
     } catch (err) {
       console.error("Google Auth error:", err);

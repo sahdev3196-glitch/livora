@@ -10,7 +10,7 @@ import Footer from './Footer';
 
 export default function CheckoutPage() {
   const { cartItems, subtotal, clearCart, setOrderSuccess } = useCart();
-  const { user } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const navigate = useNavigate();
 
   const deliveryCharge = 200;
@@ -19,10 +19,10 @@ export default function CheckoutPage() {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [stateName, setStateName] = useState('Maharashtra');
-  const [pincode, setPincode] = useState('');
+  const [address, setAddress] = useState(user?.address || '');
+  const [city, setCity] = useState(user?.city || '');
+  const [stateName, setStateName] = useState(user?.state || 'Maharashtra');
+  const [pincode, setPincode] = useState(user?.pincode || '');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -31,6 +31,10 @@ export default function CheckoutPage() {
       if (!name && user.name) setName(user.name);
       if (!email && user.email) setEmail(user.email);
       if (!phone && user.phone) setPhone(user.phone);
+      if (!address && user.address) setAddress(user.address);
+      if (!city && user.city) setCity(user.city);
+      if (user.state) setStateName(user.state);
+      if (!pincode && user.pincode) setPincode(user.pincode);
     }
   }, [user]);
 
@@ -124,6 +128,16 @@ export default function CheckoutPage() {
             // Save order to Firestore Database
             try {
               await saveOrderToFirestore(successOrder);
+              if (user && updateUserProfile) {
+                await updateUserProfile({
+                  name,
+                  phone,
+                  address,
+                  city,
+                  state: stateName,
+                  pincode
+                });
+              }
             } catch (fsErr) {
               console.warn('Error saving order to Firestore:', fsErr);
             }

@@ -45,6 +45,11 @@ export const syncUserToFirestore = async (user, customLocation = null) => {
       phone: user.phone || '',
       avatar: user.avatar || '',
       provider: user.provider || 'email',
+      address: user.address || '',
+      city: user.city || '',
+      state: user.state || '',
+      pincode: user.pincode || '',
+      preferredPaymentMethod: user.preferredPaymentMethod || 'RAZORPAY',
       updatedAt: serverTimestamp(),
       lastSeen: new Date().toISOString(),
 
@@ -166,6 +171,104 @@ export const getUserProfileFromFirestore = async (userId) => {
   } catch (error) {
     console.warn("Firestore getUserProfile error:", error);
     return null;
+  }
+};
+
+/**
+ * =========================================================================
+ * 2. CLOUD CART & WISHLIST SYNCHRONIZATION (CROSS-DEVICE)
+ * =========================================================================
+ */
+
+/**
+ * Save user's active cart to Firestore
+ */
+export const saveUserCartToFirestore = async (userId, cartItems) => {
+  if (!userId) return false;
+  try {
+    const userRef = doc(db, "users", String(userId));
+    await setDoc(userRef, { 
+      cart: cartItems || [],
+      cartUpdatedAt: serverTimestamp() 
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.warn("Firestore saveUserCart error:", error);
+    return false;
+  }
+};
+
+/**
+ * Fetch user's cart from Firestore
+ */
+export const getUserCartFromFirestore = async (userId) => {
+  if (!userId) return [];
+  try {
+    const userRef = doc(db, "users", String(userId));
+    const snap = await getDoc(userRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      return Array.isArray(data.cart) ? data.cart : [];
+    }
+    return [];
+  } catch (error) {
+    console.warn("Firestore getUserCart error:", error);
+    return [];
+  }
+};
+
+/**
+ * Save user's wishlist to Firestore
+ */
+export const saveUserWishlistToFirestore = async (userId, wishlist) => {
+  if (!userId) return false;
+  try {
+    const userRef = doc(db, "users", String(userId));
+    await setDoc(userRef, { 
+      wishlist: wishlist || [],
+      wishlistUpdatedAt: serverTimestamp() 
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.warn("Firestore saveUserWishlist error:", error);
+    return false;
+  }
+};
+
+/**
+ * Fetch user's wishlist from Firestore
+ */
+export const getUserWishlistFromFirestore = async (userId) => {
+  if (!userId) return [];
+  try {
+    const userRef = doc(db, "users", String(userId));
+    const snap = await getDoc(userRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      return Array.isArray(data.wishlist) ? data.wishlist : [];
+    }
+    return [];
+  } catch (error) {
+    console.warn("Firestore getUserWishlist error:", error);
+    return [];
+  }
+};
+
+/**
+ * Clear user's active cart in Firestore after order completion
+ */
+export const clearUserCartInFirestore = async (userId) => {
+  if (!userId) return false;
+  try {
+    const userRef = doc(db, "users", String(userId));
+    await setDoc(userRef, { 
+      cart: [],
+      cartClearedAt: serverTimestamp() 
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.warn("Firestore clearUserCart error:", error);
+    return false;
   }
 };
 
