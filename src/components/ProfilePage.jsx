@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Mail, Phone, MapPin, ShieldCheck, Save, CheckCircle, ArrowLeft, ChevronRight, Navigation } from 'lucide-react';
+import { User, Mail, Phone, MapPin, ShieldCheck, Save, CheckCircle, CheckCircle2, AlertCircle, ArrowLeft, ChevronRight, Navigation } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useUserLocation } from '../context/LocationContext';
+import { verifyAndLookupPincode } from '../utils/pincodeUtils';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -17,8 +18,37 @@ export default function ProfilePage() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeStatus, setPincodeStatus] = useState(null);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const handlePincodeChange = async (val) => {
+    const rawVal = val.replace(/\D/g, '').slice(0, 6);
+    setPincode(rawVal);
+
+    if (rawVal.length === 6) {
+      setPincodeLoading(true);
+      setPincodeStatus(null);
+      const res = await verifyAndLookupPincode(rawVal);
+      setPincodeLoading(false);
+      if (res.valid) {
+        if (res.city && !city) setCity(res.city);
+        if (res.state) setState(res.state);
+        setPincodeStatus({
+          valid: true,
+          message: res.district ? `✓ Serviced Area: ${res.district}, ${res.state}` : '✓ Valid PIN Code'
+        });
+      } else {
+        setPincodeStatus({
+          valid: false,
+          message: res.error || 'Invalid Indian postal PIN code'
+        });
+      }
+    } else {
+      setPincodeStatus(null);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -28,7 +58,14 @@ export default function ProfilePage() {
       setAddress(user.address || '');
       setCity(user.city || userLocation?.city || '');
       setState(user.state || userLocation?.state || '');
-      setPincode(user.pincode || userLocation?.pincode || '');
+      if (user.pincode) {
+        setPincode(user.pincode);
+        if (user.pincode.length === 6) {
+          handlePincodeChange(user.pincode);
+        }
+      } else if (userLocation?.pincode) {
+        setPincode(userLocation.pincode);
+      }
     } else if (userLocation) {
       setCity(userLocation.city || '');
       setState(userLocation.state || '');
@@ -223,14 +260,41 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1">Pincode</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-slate-700 block">Pincode</label>
+                      {pincodeLoading && (
+                        <span className="text-[10px] text-sky-600 font-medium flex items-center gap-1">
+                          <span className="w-2.5 h-2.5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+                          Verifying...
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
-                      placeholder="Pincode"
+                      maxLength={6}
+                      placeholder="e.g. 411038"
                       value={pincode}
-                      onChange={(e) => setPincode(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-sky-50/30 border border-sky-200/80 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      onChange={(e) => handlePincodeChange(e.target.value)}
+                      className={`w-full px-4 py-2.5 bg-sky-50/30 border rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none transition ${
+                        pincodeStatus
+                          ? pincodeStatus.valid
+                            ? 'border-emerald-400 focus:ring-2 focus:ring-emerald-400 bg-emerald-50/20'
+                            : 'border-rose-300 focus:ring-2 focus:ring-rose-400 bg-rose-50/20'
+                          : 'border-sky-200/80 focus:ring-2 focus:ring-sky-500'
+                      }`}
                     />
+                    {pincodeStatus && (
+                      <p className={`text-[11px] mt-1.5 font-medium flex items-center gap-1 ${
+                        pincodeStatus.valid ? 'text-emerald-700' : 'text-rose-600'
+                      }`}>
+                        {pincodeStatus.valid ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        )}
+                        <span>{pincodeStatus.message}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

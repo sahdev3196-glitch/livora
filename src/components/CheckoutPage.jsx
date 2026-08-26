@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { loadRazorpayScript } from '../utils/razorpay';
 import { saveOrderToFirestore } from '../services/firestoreService';
+import { verifyAndLookupPincode } from '../utils/pincodeUtils';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -23,8 +24,37 @@ export default function CheckoutPage() {
   const [city, setCity] = useState(user?.city || '');
   const [stateName, setStateName] = useState(user?.state || 'Maharashtra');
   const [pincode, setPincode] = useState(user?.pincode || '');
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeStatus, setPincodeStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const handlePincodeChange = async (val) => {
+    const rawVal = val.replace(/\D/g, '').slice(0, 6);
+    setPincode(rawVal);
+
+    if (rawVal.length === 6) {
+      setPincodeLoading(true);
+      setPincodeStatus(null);
+      const res = await verifyAndLookupPincode(rawVal);
+      setPincodeLoading(false);
+      if (res.valid) {
+        if (res.city && !city) setCity(res.city);
+        if (res.state) setStateName(res.state);
+        setPincodeStatus({
+          valid: true,
+          message: res.district ? `✓ Serviced Area: ${res.district}, ${res.state}` : '✓ Valid Indian PIN Code'
+        });
+      } else {
+        setPincodeStatus({
+          valid: false,
+          message: res.error || 'Invalid Indian postal PIN code'
+        });
+      }
+    } else {
+      setPincodeStatus(null);
+    }
+  };
 
   React.useEffect(() => {
     if (user) {
@@ -34,7 +64,12 @@ export default function CheckoutPage() {
       if (!address && user.address) setAddress(user.address);
       if (!city && user.city) setCity(user.city);
       if (user.state) setStateName(user.state);
-      if (!pincode && user.pincode) setPincode(user.pincode);
+      if (!pincode && user.pincode) {
+        setPincode(user.pincode);
+        if (user.pincode.length === 6) {
+          handlePincodeChange(user.pincode);
+        }
+      }
     }
   }, [user]);
 
@@ -50,6 +85,11 @@ export default function CheckoutPage() {
 
     if (!name || !phone || !address || !city || !pincode) {
       setErrorMessage('Please fill in all mandatory delivery details.');
+      return;
+    }
+
+    if (!/^[1-9][0-9]{5}$/.test(pincode)) {
+      setErrorMessage('Please enter a valid 6-digit Indian postal PIN code (e.g. 411038).');
       return;
     }
 
@@ -379,17 +419,44 @@ export default function CheckoutPage() {
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                        Pincode <span className="text-rose-600">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-bold text-slate-700 block">
+                          Pincode <span className="text-rose-600">*</span>
+                        </label>
+                        {pincodeLoading && (
+                          <span className="text-[10px] text-sky-600 font-medium flex items-center gap-1">
+                            <span className="w-2.5 h-2.5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+                            Verifying...
+                          </span>
+                        )}
+                      </div>
                       <input
                         type="text"
                         required
+                        maxLength={6}
                         value={pincode}
-                        onChange={(e) => setPincode(e.target.value)}
-                        placeholder="411046"
-                        className="w-full px-4 py-3 bg-sky-50/30 border border-sky-200/80 rounded-2xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-sky-500 focus:outline-none transition"
+                        onChange={(e) => handlePincodeChange(e.target.value)}
+                        placeholder="e.g. 411038"
+                        className={`w-full px-4 py-3 bg-sky-50/30 border rounded-2xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none transition ${
+                          pincodeStatus
+                            ? pincodeStatus.valid
+                              ? 'border-emerald-400 focus:ring-2 focus:ring-emerald-400 bg-emerald-50/20'
+                              : 'border-rose-300 focus:ring-2 focus:ring-rose-400 bg-rose-50/20'
+                            : 'border-sky-200/80 focus:ring-2 focus:ring-sky-500'
+                        }`}
                       />
+                      {pincodeStatus && (
+                        <p className={`text-[11px] mt-1.5 font-medium flex items-center gap-1 ${
+                          pincodeStatus.valid ? 'text-emerald-700' : 'text-rose-600'
+                        }`}>
+                          {pincodeStatus.valid ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          ) : (
+                            <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          )}
+                          <span>{pincodeStatus.message}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
