@@ -245,8 +245,8 @@ export default function CheckoutPage() {
         throw new Error(orderData.error || 'Failed to initialize Cashfree payment order.');
       }
 
-      // Step 3: Initialize Cashfree Dropin Modal
-      const cashfreeMode = (import.meta.env.VITE_CASHFREE_MODE || 'sandbox').toLowerCase();
+      // Step 3: Initialize Cashfree Dropin Modal matching the order session environment
+      const cashfreeMode = (orderData.mode || import.meta.env.VITE_CASHFREE_MODE || 'production').toLowerCase();
       const cashfree = window.Cashfree({
         mode: cashfreeMode
       });

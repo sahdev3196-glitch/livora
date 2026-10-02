@@ -433,7 +433,8 @@ const createCashfreeOrderHandler = async (req, res) => {
       payment_session_id: cfData.payment_session_id,
       cf_order_id: cfData.cf_order_id,
       order_status: cfData.order_status,
-      order_amount: cfData.order_amount
+      order_amount: cfData.order_amount,
+      mode: env.toLowerCase()
     });
   } catch (err) {
     console.error('[Cashfree] Create Order Server Error:', err);
