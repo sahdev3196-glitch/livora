@@ -33,7 +33,7 @@ async function addDummyOrder() {
       address: "Flat 402, Royal Palms, Bandra West, Mumbai, Maharashtra - 400050"
     },
     paymentDetails: {
-      method: "RAZORPAY",
+      method: "CASHFREE",
       paymentId: "pay_test_" + Math.random().toString(36).substring(7),
       orderId: "order_test_" + Math.random().toString(36).substring(7)
     },
