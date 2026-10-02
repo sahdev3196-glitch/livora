@@ -6,17 +6,11 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
-import Razorpay from 'razorpay';
 import { db } from './database.js';
 import { seedDB } from './seed.js';
 import cloudinary, { uploadImageToCloudinary, getOptimizedImageUrl } from './cloudinary.js';
 
 dotenv.config();
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_live_TTbiP0afZW3w2T',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'y1SIZBABsa1nO2xJccOaZHXz'
-});
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -348,110 +342,172 @@ app.get('/api/products', (req, res) => {
 
 // --- PAYMENT & ORDERS ROUTES ---
 
-// 1. Create Razorpay Order
-const createRazorpayOrderHandler = async (req, res) => {
+// --- CASHFREE PAYMENT GATEWAY CONFIGURATION ---
+const getCashfreeConfig = () => {
+  const appId = process.env.CASHFREE_APP_ID || '';
+  const secretKey = process.env.CASHFREE_SECRET_KEY || '';
+  const env = (process.env.CASHFREE_ENV || 'PRODUCTION').toUpperCase();
+  const baseUrl = env === 'PRODUCTION'
+    ? 'https://api.cashfree.com/pg'
+    : 'https://sandbox.cashfree.com/pg';
+  const apiVersion = process.env.CASHFREE_API_VERSION || '2023-08-01';
+  return { appId, secretKey, env, baseUrl, apiVersion };
+};
+
+// 1. Create Cashfree Order & Generate payment_session_id
+const createCashfreeOrderHandler = async (req, res) => {
   try {
-    const { amount, currency = 'INR', receipt } = req.body;
+    const { appId, secretKey, env, baseUrl, apiVersion } = getCashfreeConfig();
+    const { amount, currency = 'INR', customer, orderId, returnUrl } = req.body;
 
     if (amount === undefined || amount === null) {
-      return res.status(400).json({ error: 'Amount is required' });
+      return res.status(400).json({ error: 'Order amount is required' });
     }
 
-    const parsedAmount = parseInt(amount, 10);
-    if (isNaN(parsedAmount) || parsedAmount < 100) {
-      return res.status(400).json({
-        error: 'Amount must be at least 100 paise (₹1.00)'
-      });
+    const orderAmount = Number(amount);
+    if (isNaN(orderAmount) || orderAmount <= 0) {
+      return res.status(400).json({ error: 'Invalid order amount' });
     }
 
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      return res.status(401).json({
-        error: 'Razorpay API credentials are not configured on server'
-      });
+    if (!appId || !secretKey) {
+      return res.status(500).json({ error: 'Cashfree API credentials are not configured on server' });
     }
 
-    const options = {
-      amount: parsedAmount,
-      currency: currency.toUpperCase(),
-      receipt: receipt || `rcpt_${Date.now()}`
+    // Cashfree order_id must be alphanumeric, max 50 chars
+    const cfOrderId = (orderId || ('LIV_' + Date.now() + '_' + Math.floor(1000 + Math.random() * 9000))).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 48);
+    const customerId = (customer?.userId || customer?.id || ('GUEST_' + Date.now())).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 48);
+    const customerPhone = customer?.phone ? String(customer.phone).replace(/\D/g, '').slice(-10) : '9999999999';
+    const customerEmail = customer?.email || 'orders@livorawallcovering.com';
+    const customerName = (customer?.name || customer?.fullName || 'Valued Customer').slice(0, 50);
+
+    // Cashfree Production requires https:// in return_url
+    let safeReturnUrl = `https://livorawallcovering.com/checkout?order_id=${cfOrderId}`;
+    if (returnUrl && returnUrl.startsWith('https://')) {
+      safeReturnUrl = returnUrl;
+    }
+
+    const orderPayload = {
+      order_id: cfOrderId,
+      order_amount: Math.round(orderAmount),
+      order_currency: currency.toUpperCase(),
+      customer_details: {
+        customer_id: customerId,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone.length === 10 ? customerPhone : '9999999999'
+      },
+      order_meta: {
+        return_url: safeReturnUrl
+      },
+      order_note: `LIVORA Custom Wallpaper Order - ${cfOrderId}`
     };
 
-    const order = await razorpay.orders.create(options);
+    console.log(`[Cashfree] Creating order ${cfOrderId} for ₹${orderPayload.order_amount} (${env})`);
+
+    const cfResponse = await fetch(`${baseUrl}/orders`, {
+      method: 'POST',
+      headers: {
+        'x-client-id': appId,
+        'x-client-secret': secretKey,
+        'x-api-version': apiVersion,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(orderPayload)
+    });
+
+    const cfData = await cfResponse.json();
+
+    if (!cfResponse.ok) {
+      console.error('[Cashfree] Order creation failed:', cfData);
+      return res.status(cfResponse.status).json({
+        error: cfData.message || 'Failed to create Cashfree order',
+        details: cfData
+      });
+    }
+
+    console.log(`[Cashfree] Order ${cfOrderId} created successfully. Session: ${cfData.payment_session_id?.slice(0, 20)}...`);
 
     return res.status(200).json({
       success: true,
-      order_id: order.id,
-      id: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      receipt: order.receipt,
-      status: order.status
+      order_id: cfData.order_id,
+      payment_session_id: cfData.payment_session_id,
+      cf_order_id: cfData.cf_order_id,
+      order_status: cfData.order_status,
+      order_amount: cfData.order_amount
     });
   } catch (err) {
-    console.error('Razorpay Create Order Error:', err);
-    if (err.statusCode === 401 || (err.error && err.error.code === 'BAD_REQUEST_ERROR' && String(err.error.description).toLowerCase().includes('auth'))) {
-      return res.status(401).json({ error: 'Razorpay authentication failed: Invalid API credentials' });
-    }
+    console.error('[Cashfree] Create Order Server Error:', err);
     return res.status(500).json({
-      error: err.error?.description || err.message || 'Failed to create Razorpay order'
+      error: err.message || 'Internal server error while creating Cashfree order'
     });
   }
 };
 
-app.post('/api/create-order', createRazorpayOrderHandler);
-app.post('/api/payment/create-order', createRazorpayOrderHandler);
-
-// 2. Verify Razorpay Payment Signature
-const verifyRazorpayPaymentHandler = (req, res) => {
+// 2. Verify Cashfree Payment via Official PG API
+const verifyCashfreeOrderHandler = async (req, res) => {
   try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      order_id,
-      payment_id,
-      signature,
-      customer,
-      items,
-      totalAmount
-    } = req.body;
+    const { order_id, orderId, customer, items, totalAmount } = req.body;
+    const targetOrderId = order_id || orderId;
 
-    const orderId = razorpay_order_id || order_id;
-    const paymentId = razorpay_payment_id || payment_id;
-    const signatureProvided = razorpay_signature || signature;
+    if (!targetOrderId) {
+      return res.status(400).json({ success: false, error: 'order_id is required' });
+    }
 
-    if (!orderId || !paymentId || !signatureProvided) {
+    const { appId, secretKey, baseUrl, apiVersion } = getCashfreeConfig();
+
+    console.log(`[Cashfree] Verifying order ${targetOrderId} from Cashfree API...`);
+
+    // 1. Fetch Order Status directly from Cashfree
+    const cfOrderRes = await fetch(`${baseUrl}/orders/${targetOrderId}`, {
+      headers: {
+        'x-client-id': appId,
+        'x-client-secret': secretKey,
+        'x-api-version': apiVersion
+      }
+    });
+
+    const orderData = await cfOrderRes.json();
+
+    if (!cfOrderRes.ok) {
+      console.error('[Cashfree] Order fetch error:', orderData);
+      return res.status(cfOrderRes.status).json({
+        success: false,
+        error: orderData.message || 'Unable to retrieve order from Cashfree'
+      });
+    }
+
+    // 2. Fetch Payment Transactions for Order
+    let paymentDetails = null;
+    try {
+      const cfPaymentsRes = await fetch(`${baseUrl}/orders/${targetOrderId}/payments`, {
+        headers: {
+          'x-client-id': appId,
+          'x-client-secret': secretKey,
+          'x-api-version': apiVersion
+        }
+      });
+      if (cfPaymentsRes.ok) {
+        const payments = await cfPaymentsRes.json();
+        if (Array.isArray(payments) && payments.length > 0) {
+          paymentDetails = payments.find(p => p.payment_status === 'SUCCESS') || payments[0];
+        }
+      }
+    } catch (payErr) {
+      console.warn('[Cashfree] Payments fetch warning:', payErr.message);
+    }
+
+    const isPaid = orderData.order_status === 'PAID' || (paymentDetails && paymentDetails.payment_status === 'SUCCESS');
+
+    if (!isPaid) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required payment verification fields (order_id, payment_id, signature)'
+        status: orderData.order_status,
+        message: `Order status is ${orderData.order_status}. Payment has not been completed.`,
+        order: orderData
       });
     }
 
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keySecret) {
-      return res.status(500).json({
-        success: false,
-        error: 'Razorpay Key Secret is missing on server configuration'
-      });
-    }
-
-    // Generate expected HMAC-SHA256 signature
-    const generatedSignature = crypto
-      .createHmac('sha256', keySecret)
-      .update(`${orderId}|${paymentId}`)
-      .digest('hex');
-
-    const isSignatureValid = generatedSignature === signatureProvided;
-
-    if (!isSignatureValid) {
-      console.warn(`Payment signature mismatch: expected=${generatedSignature}, received=${signatureProvided}`);
-      return res.status(400).json({
-        success: false,
-        error: 'Payment verification failed: signature mismatch'
-      });
-    }
-
-    // Signature verified! Create order in DB if items are provided
+    // 3. Save order into Database
     let savedOrder = null;
     if (items && items.length > 0) {
       savedOrder = db.createOrder({
@@ -462,33 +518,40 @@ const verifyRazorpayPaymentHandler = (req, res) => {
         customerPhone: customer?.phone || customer?.mobile || '',
         shippingAddress: customer?.address ? `${customer.address}, ${customer.city || ''}, ${customer.state || ''} - ${customer.pincode || ''}` : 'Standard Delivery',
         items,
-        totalAmount: totalAmount || 0,
+        totalAmount: totalAmount || orderData.order_amount || 0,
         status: 'PAID',
-        paymentMethod: 'RAZORPAY_ONLINE',
+        paymentMethod: 'CASHFREE',
         trackingNumber: 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000),
-        paymentId: paymentId,
-        razorpayOrderId: orderId
+        paymentId: paymentDetails?.cf_payment_id || ('CF_' + targetOrderId),
+        cashfreeOrderId: targetOrderId,
+        orderData
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Payment verified and confirmed successfully!',
-      order_id: orderId,
-      payment_id: paymentId,
+      message: 'Cashfree payment verified and confirmed successfully!',
+      order_id: targetOrderId,
+      cf_payment_id: paymentDetails?.cf_payment_id || null,
+      payment_method: paymentDetails?.payment_method || null,
       order: savedOrder
     });
   } catch (err) {
-    console.error('Razorpay Signature Verification Error:', err);
+    console.error('[Cashfree] Verification Error:', err);
     return res.status(500).json({
       success: false,
-      error: 'Failed to verify payment signature'
+      error: err.message || 'Failed to verify Cashfree payment'
     });
   }
 };
 
-app.post('/api/verify-payment', verifyRazorpayPaymentHandler);
-app.post('/api/payment/verify', verifyRazorpayPaymentHandler);
+// Route definitions for Cashfree
+app.post('/api/cashfree/create-order', createCashfreeOrderHandler);
+app.post('/api/cashfree/verify-order', verifyCashfreeOrderHandler);
+app.post('/api/create-order', createCashfreeOrderHandler);
+app.post('/api/payment/create-order', createCashfreeOrderHandler);
+app.post('/api/verify-payment', verifyCashfreeOrderHandler);
+app.post('/api/payment/verify', verifyCashfreeOrderHandler);
 
 // Manual or COD Orders fallback
 app.post('/api/orders', (req, res) => {
@@ -511,7 +574,7 @@ app.post('/api/orders', (req, res) => {
       paymentMethod: paymentDetails?.method || 'ONLINE',
       trackingNumber: 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000),
       paymentId: paymentDetails?.paymentId || 'PAY_' + Math.random().toString(36).substr(2, 9),
-      razorpayOrderId: paymentDetails?.orderId || ''
+      cashfreeOrderId: paymentDetails?.orderId || ''
     });
 
     res.status(201).json({

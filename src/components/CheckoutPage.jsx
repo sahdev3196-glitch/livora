@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShieldCheck, CreditCard, Lock, Smartphone, ChevronRight, ArrowLeft, Building2, CheckCircle2, Award, AlertCircle, Sparkles } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { loadRazorpayScript } from '../utils/razorpay';
+import { loadCashfreeScript } from '../utils/cashfree';
 import { saveOrderToFirestore } from '../services/firestoreService';
 import { verifyAndLookupPincode } from '../utils/pincodeUtils';
 import Header from './Header';
@@ -73,6 +73,116 @@ export default function CheckoutPage() {
     }
   }, [user]);
 
+  // Handle Cashfree redirect return if page redirected
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const returnOrderId = params.get('order_id');
+    if (returnOrderId) {
+      verifyCashfreePayment(returnOrderId, 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000));
+    }
+  }, []);
+
+  const finalizeSuccessfulOrder = async (orderId, paymentId, trackingNo) => {
+    const successOrder = {
+      id: orderId,
+      createdAt: new Date().toISOString(),
+      customer: {
+        userId: user?.id || 'GUEST',
+        name,
+        email: email || '',
+        phone,
+        address: `${address}, ${city}, ${stateName} - ${pincode}`,
+        city,
+        state: stateName,
+        pincode
+      },
+      items: cartItems,
+      subtotal: subtotal,
+      deliveryCharge: deliveryCharge,
+      totalAmount: totalPayable,
+      paymentDetails: {
+        method: 'CASHFREE',
+        paymentId: paymentId || ('CF_' + orderId),
+        orderId: orderId,
+        status: 'PAID'
+      },
+      status: 'PAID',
+      trackingNumber: trackingNo
+    };
+
+    // Save order to Firestore Database
+    try {
+      await saveOrderToFirestore(successOrder);
+      if (user && updateUserProfile) {
+        await updateUserProfile({
+          name,
+          phone,
+          address,
+          city,
+          state: stateName,
+          pincode
+        });
+      }
+    } catch (fsErr) {
+      console.warn('Error saving order to Firestore:', fsErr);
+    }
+
+    // Save to localStorage for instant user order tracking
+    try {
+      const userOrdersKey = `livora_orders_${user?.id || 'guest'}`;
+      const existing = JSON.parse(localStorage.getItem(userOrdersKey) || '[]');
+      existing.unshift(successOrder);
+      localStorage.setItem(userOrdersKey, JSON.stringify(existing));
+    } catch (e) {}
+
+    setLoading(false);
+    clearCart();
+    setOrderSuccess(successOrder);
+    navigate('/');
+  };
+
+  const verifyCashfreePayment = async (orderId, trackingNo) => {
+    try {
+      setLoading(true);
+      setErrorMessage('');
+
+      const apiBase = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${apiBase}/api/cashfree/verify-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_id: orderId,
+          customer: {
+            userId: user?.id || 'GUEST',
+            name,
+            email: email || '',
+            phone,
+            address: `${address}, ${city}, ${stateName} - ${pincode}`,
+            city,
+            state: stateName,
+            pincode
+          },
+          items: cartItems,
+          totalAmount: totalPayable
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        await finalizeSuccessfulOrder(orderId, data.cf_payment_id, trackingNo);
+      } else {
+        console.warn('Cashfree payment verification pending or failed:', data);
+        setErrorMessage(data.message || 'Payment verification could not be completed. If money was deducted, please contact support with Order ID: ' + orderId);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Error verifying Cashfree order:', err);
+      setErrorMessage('Verification failed. If payment was made, please contact LIVORA support with Order ID: ' + orderId);
+      setLoading(false);
+    }
+  };
+
   const handleProcessPayment = async (e) => {
     e.preventDefault();
     if (cartItems.length === 0) return;
@@ -97,129 +207,75 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      // Step 1: Ensure Razorpay SDK is loaded
-      const isLoaded = await loadRazorpayScript();
-      if (!isLoaded || !window.Razorpay) {
-        setErrorMessage('Unable to load Razorpay payment gateway. Please check your internet connection and try again.');
+      // Step 1: Ensure Cashfree SDK is loaded
+      const isLoaded = await loadCashfreeScript();
+      if (!isLoaded || !window.Cashfree) {
+        setErrorMessage('Unable to load Cashfree payment gateway. Please check your internet connection and try again.');
         setLoading(false);
         return;
       }
 
-      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TTbiP0afZW3w2T';
-      const amountInPaise = Math.max(100, Math.round(totalPayable * 100));
-      const orderId = 'LIV-' + Math.floor(100000 + Math.random() * 900000);
+      const orderId = 'LIV_' + Date.now() + '_' + Math.floor(1000 + Math.random() * 9000);
       const trackingNo = 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000);
 
-      // Step 2: Configure Razorpay Checkout
-      const options = {
-        key: razorpayKeyId,
-        amount: amountInPaise,
-        currency: 'INR',
-        name: 'LIVORA Wallpaper Studio',
-        description: `Custom Wall Murals & Wallpapers (${cartItems.length} roll set${cartItems.length > 1 ? 's' : ''})`,
-        image: 'https://livorawallcovering.com/favicon.svg',
-        prefill: {
-          name: name,
-          email: email || '',
-          contact: phone
-        },
-        notes: {
-          shipping_address: `${address}, ${city}, ${stateName} - ${pincode}`,
-          customer_name: name,
-          customer_phone: phone
-        },
-        theme: {
-          color: '#0284c7'
-        },
-        handler: async function (response) {
-          try {
-            setLoading(true);
-            setErrorMessage('');
-
-            // Step 3: ONLY punch and confirm the order AFTER successful Razorpay payment
-            const successOrder = {
-              id: orderId,
-              createdAt: new Date().toISOString(),
-              customer: {
-                userId: user?.id || 'GUEST',
-                name,
-                email: email || '',
-                phone,
-                address: `${address}, ${city}, ${stateName} - ${pincode}`,
-                city,
-                state: stateName,
-                pincode
-              },
-              items: cartItems,
-              subtotal: subtotal,
-              deliveryCharge: deliveryCharge,
-              totalAmount: totalPayable,
-              paymentDetails: {
-                method: 'RAZORPAY',
-                paymentId: response.razorpay_payment_id,
-                orderId: response.razorpay_order_id || '',
-                signature: response.razorpay_signature || '',
-                status: 'PAID'
-              },
-              status: 'PAID',
-              trackingNumber: trackingNo
-            };
-
-            // Save order to Firestore Database
-            try {
-              await saveOrderToFirestore(successOrder);
-              if (user && updateUserProfile) {
-                await updateUserProfile({
-                  name,
-                  phone,
-                  address,
-                  city,
-                  state: stateName,
-                  pincode
-                });
-              }
-            } catch (fsErr) {
-              console.warn('Error saving order to Firestore:', fsErr);
-            }
-
-            // Save to localStorage for instant user order tracking
-            try {
-              const userOrdersKey = `livora_orders_${user?.id || 'guest'}`;
-              const existing = JSON.parse(localStorage.getItem(userOrdersKey) || '[]');
-              existing.unshift(successOrder);
-              localStorage.setItem(userOrdersKey, JSON.stringify(existing));
-            } catch (e) {}
-
-            setLoading(false);
-            clearCart();
-            setOrderSuccess(successOrder);
-            navigate('/');
-          } catch (punchErr) {
-            console.error('Error creating order after payment:', punchErr);
-            setErrorMessage('Payment received with ID: ' + response.razorpay_payment_id + '. Please contact support to confirm order details.');
-            setLoading(false);
-          }
-        },
-        modal: {
-          ondismiss: function () {
-            setLoading(false);
-            setErrorMessage('Payment window was closed. Complete payment to confirm your custom wallpaper order.');
-          }
-        }
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response) {
-        console.error('Razorpay payment failed:', response.error);
-        const reason = response.error?.description || response.error?.reason || 'Transaction could not be completed';
-        setErrorMessage(`Payment failed: ${reason}`);
-        setLoading(false);
+      // Step 2: Create authentic Cashfree Order via Backend API
+      const apiBase = import.meta.env.VITE_API_URL || '';
+      const createRes = await fetch(`${apiBase}/api/cashfree/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: totalPayable,
+          currency: 'INR',
+          orderId: orderId,
+          customer: {
+            userId: user?.id || 'GUEST',
+            name: name,
+            email: email || '',
+            phone: phone
+          },
+          returnUrl: window.location.protocol === 'https:'
+            ? `${window.location.origin}/checkout?order_id=${orderId}`
+            : `https://livorawallcovering.com/checkout?order_id=${orderId}`
+        })
       });
 
-      rzp.open();
+      const orderData = await createRes.json();
+
+      if (!createRes.ok || !orderData.payment_session_id) {
+        throw new Error(orderData.error || 'Failed to initialize Cashfree payment order.');
+      }
+
+      // Step 3: Initialize Cashfree Dropin Modal
+      const cashfreeMode = (import.meta.env.VITE_CASHFREE_MODE || 'sandbox').toLowerCase();
+      const cashfree = window.Cashfree({
+        mode: cashfreeMode
+      });
+
+      const checkoutOptions = {
+        paymentSessionId: orderData.payment_session_id,
+        redirectTarget: '_modal' // Opens native dropin modal inside the page
+      };
+
+      cashfree.checkout(checkoutOptions).then(async (result) => {
+        if (result.error) {
+          console.warn('Cashfree modal closed or error:', result.error);
+          setErrorMessage(result.error.message || 'Payment window was closed. Complete payment anytime to confirm your custom wallpaper order.');
+          setLoading(false);
+          return;
+        }
+
+        if (result.redirect) {
+          // If bank requires redirect
+          console.log('Redirecting to bank authentication...');
+          return;
+        }
+
+        // Verify order on backend directly from Cashfree API
+        await verifyCashfreePayment(orderId, trackingNo);
+      });
     } catch (err) {
       console.error('Payment processing error:', err);
-      setErrorMessage(err.message || 'Unable to open payment gateway. Please try again.');
+      setErrorMessage(err.message || 'Unable to open Cashfree payment gateway. Please try again.');
       setLoading(false);
     }
   };
@@ -462,14 +518,14 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Step 2: Razorpay Payment Gateway */}
+              {/* Step 2: Cashfree Payment Gateway */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
                 <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
                   <span className="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">2</span>
                   <h2 className="font-serif font-bold text-lg text-slate-900">Payment Gateway</h2>
                 </div>
 
-                {/* Razorpay Single Dedicated Method */}
+                {/* Cashfree Single Dedicated Method */}
                 <div className="p-5 rounded-2xl border-2 border-sky-500 bg-sky-50/50 ring-2 ring-sky-500/20 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -478,9 +534,9 @@ export default function CheckoutPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-slate-900">Razorpay Secure Checkout</h3>
+                          <h3 className="text-sm font-bold text-slate-900">Cashfree Secure Checkout</h3>
                           <span className="text-[10px] font-bold bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                            Verified
+                            Official Gateway
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">
@@ -618,10 +674,10 @@ export default function CheckoutPage() {
                   <Lock className="w-5 h-5" />
                   <span>
                     {loading
-                      ? 'Opening Razorpay Gateway...'
+                      ? 'Opening Cashfree Gateway...'
                       : !user
                       ? 'Sign In with Google to Order'
-                      : `Pay ₹${totalPayable.toLocaleString('en-IN')} with Razorpay`}
+                      : `Pay ₹${totalPayable.toLocaleString('en-IN')} with Cashfree`}
                   </span>
                 </button>
 
@@ -629,7 +685,7 @@ export default function CheckoutPage() {
                 <div className="bg-sky-50/60 border border-sky-200/60 rounded-2xl p-3.5 space-y-2 text-[11px] text-slate-600">
                   <div className="flex items-center gap-2 text-sky-900 font-bold">
                     <ShieldCheck className="w-4 h-4 text-sky-600 shrink-0" />
-                    <span>Razorpay 100% Encrypted & Safe Gateway</span>
+                    <span>Cashfree 100% Encrypted & Safe Gateway</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Award className="w-4 h-4 text-sky-700 shrink-0" />

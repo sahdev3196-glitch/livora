@@ -49,7 +49,7 @@ export const syncUserToFirestore = async (user, customLocation = null) => {
       city: user.city || '',
       state: user.state || '',
       pincode: user.pincode || '',
-      preferredPaymentMethod: user.preferredPaymentMethod || 'RAZORPAY',
+      preferredPaymentMethod: user.preferredPaymentMethod || 'CASHFREE',
       updatedAt: serverTimestamp(),
       lastSeen: new Date().toISOString(),
 
