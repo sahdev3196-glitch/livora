@@ -141,12 +141,20 @@ export default function CheckoutPage() {
     navigate('/');
   };
 
+  const getApiBaseUrl = () => {
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+    if (typeof window !== 'undefined' && window.location.hostname.includes('livorawallcovering.com')) {
+      return 'https://livora-seven.vercel.app';
+    }
+    return '';
+  };
+
   const verifyCashfreePayment = async (orderId, trackingNo) => {
     try {
       setLoading(true);
       setErrorMessage('');
 
-      const apiBase = import.meta.env.VITE_API_URL || '';
+      const apiBase = getApiBaseUrl();
       const res = await fetch(`${apiBase}/api/cashfree/verify-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -219,7 +227,7 @@ export default function CheckoutPage() {
       const trackingNo = 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000);
 
       // Step 2: Create authentic Cashfree Order via Backend API
-      const apiBase = import.meta.env.VITE_API_URL || '';
+      const apiBase = getApiBaseUrl();
       const createRes = await fetch(`${apiBase}/api/cashfree/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -239,7 +247,12 @@ export default function CheckoutPage() {
         })
       });
 
-      const orderData = await createRes.json();
+      let orderData;
+      try {
+        orderData = await createRes.json();
+      } catch (jsonErr) {
+        throw new Error(`Payment service returned invalid response (Status ${createRes.status}). Please try again in a moment.`);
+      }
 
       if (!createRes.ok || !orderData.payment_session_id) {
         throw new Error(orderData.error || 'Failed to initialize Cashfree payment order.');

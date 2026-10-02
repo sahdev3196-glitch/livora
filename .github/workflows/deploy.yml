@@ -35,6 +35,10 @@ jobs:
 
       - name: Build Project
         run: npm run build
+        env:
+          VITE_API_URL: https://livora-seven.vercel.app
+          VITE_CASHFREE_MODE: production
+          VITE_CASHFREE_APP_ID: 1450236c39dedcd505aa0fa95766320541
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
