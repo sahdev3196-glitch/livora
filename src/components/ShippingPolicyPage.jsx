@@ -74,12 +74,12 @@ export default function ShippingPolicyPage() {
             </div>
 
             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-800 flex items-center justify-center font-bold">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold">
                 <PackageCheck className="w-5 h-5" />
               </div>
-              <h3 className="font-serif font-bold text-sm text-slate-900">Express Delivery</h3>
+              <h3 className="font-serif font-bold text-sm text-slate-900">Free Pan-India Delivery</h3>
               <p className="text-xs text-slate-600">
-                A flat ₹200 express shipping fee is added at checkout for insured, protective roll packaging and doorstep courier delivery across India.
+                100% Free doorstep delivery across all serviceable PIN codes in India. Packed in heavy-duty moisture-resistant hard tubes at zero extra charge.
               </p>
             </div>
           </div>
@@ -87,7 +87,7 @@ export default function ShippingPolicyPage() {
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
             <h2 className="font-serif font-bold text-lg text-slate-900">Courier Partners & Real-Time Tracking</h2>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              We partner with India's premier air express logistics providers including <strong>BlueDart, Delhivery, DTDC, and XpressBees</strong>. Once dispatched from our Pune studio, a live consignment tracking number and direct tracking link are shared via WhatsApp and SMS.
+              We partner with India's premier express logistics providers including <strong>Delhivery, BlueDart, DTDC, and XpressBees</strong>. Once dispatched from our facility, a live consignment tracking number and direct tracking link are shared via WhatsApp and SMS.
             </p>
           </div>
         </div>

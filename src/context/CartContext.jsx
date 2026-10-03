@@ -132,20 +132,21 @@ export const CartProvider = ({ children }) => {
   };
 
   const toggleWishlist = (product) => {
-    if (!userId) return;
+    if (!userId || !product) return;
     setWishlist(prev => {
-      const exists = prev.some(item => item.id === product.id);
+      const pArr = Array.isArray(prev) ? prev : [];
+      const exists = pArr.some(item => item && (item.id === product.id || item === product.id));
       if (exists) {
-        return prev.filter(item => item.id !== product.id);
+        return pArr.filter(item => item && (item.id ? item.id !== product.id : item !== product.id));
       } else {
-        return [...prev, product];
+        return [...pArr, product];
       }
     });
   };
 
   const isWishlisted = (productId) => {
-    if (!userId) return false;
-    return wishlist.some(item => item.id === productId);
+    if (!userId || !productId || !Array.isArray(wishlist)) return false;
+    return wishlist.some(item => item && (item.id === productId || item === productId));
   };
 
   const clearCart = () => {

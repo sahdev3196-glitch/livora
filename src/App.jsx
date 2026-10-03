@@ -3,6 +3,7 @@ import { Routes, Route, useParams, useLocation, useNavigate, Link } from 'react-
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
 import { LocationProvider } from './context/LocationContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Header';
 import HeroBanner from './components/HeroBanner';
 import ShopByThemes from './components/ShopByThemes';
@@ -27,6 +28,7 @@ const RefundPolicyPage = lazy(() => import('./components/RefundPolicyPage'));
 const ShippingPolicyPage = lazy(() => import('./components/ShippingPolicyPage'));
 const TermsPolicyPage = lazy(() => import('./components/TermsPolicyPage'));
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
+const NotFoundPage = lazy(() => import('./components/NotFoundPage'));
 
 // Luxury Loading Suspense Fallback
 function PageLoadingSkeleton() {
@@ -87,11 +89,11 @@ function CatalogContent() {
 
   // Dynamic SEO Title and Description Manager
   useEffect(() => {
-    let title = 'LIVORA — Premium Custom Wallpapers starting at ₹40/sqft | Buy Online India';
-    let desc = 'Transform your walls with LIVORA made-to-measure custom wallpapers & murals starting at ₹40/sqft. Premium textures, Pichwai, Tropical, Boho, Kids designs with PAN India delivery.';
+    let title = 'LIVORA — Premium Custom Wallpapers starting at ₹120/sqft | Buy Online India';
+    let desc = 'Transform your walls with LIVORA made-to-measure custom wallpapers & murals starting at ₹120/sqft. Premium textures, Pichwai, Tropical, Boho, Kids designs with PAN India delivery.';
 
     if (selectedTheme !== 'all' && selectedTheme !== 'wishlist') {
-      title = `${selectedTheme} Custom Wallpapers starting at ₹40/sqft | LIVORA`;
+      title = `${selectedTheme} Custom Wallpapers starting at ₹120/sqft | LIVORA`;
       desc = `Explore handcrafted ${selectedTheme} custom made-to-measure wallpapers and murals. Premium organic prints for your walls with pan-India express shipping.`;
     } else if (selectedRoom !== 'all') {
       title = `${selectedRoom} Wallpaper Designs | Made-to-Measure Murals | LIVORA`;
@@ -214,7 +216,7 @@ function CatalogContent() {
                 </Link>
               )}
               <div className="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-full shadow-xs">
-                Showing <strong>{totalItems > 0 ? `${startIndex + 1}-${endIndex}` : 0}</strong> of <strong>{totalItems}</strong> Made-to-Order Wallpapers (@ ₹40/sqft)
+                Showing <strong>{totalItems > 0 ? `${startIndex + 1}-${endIndex}` : 0}</strong> of <strong>{totalItems}</strong> Made-to-Order Wallpapers (@ ₹120/sqft)
               </div>
             </div>
           </div>
@@ -385,40 +387,44 @@ function CatalogContent() {
 
 function MainCatalogRoutes() {
   return (
-    <Suspense fallback={<PageLoadingSkeleton />}>
-      <Routes>
-        <Route path="/" element={<CatalogContent />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/product/:productId" element={<ProductDetailPage />} />
-        <Route path="/orders" element={<OrdersPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/refund-policy" element={<RefundPolicyPage />} />
-        <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
-        <Route path="/terms" element={<TermsPolicyPage />} />
-        <Route path="/terms-and-conditions" element={<TermsPolicyPage />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-        <Route path="/category/:themeSlug" element={<CatalogContent />} />
-        <Route path="/room/:roomSlug" element={<CatalogContent />} />
-        <Route path="/wishlist" element={<CatalogContent />} />
-        <Route path="/kids-wallpapers" element={<CatalogContent />} />
-        <Route path="/wall-arts" element={<CatalogContent />} />
-        <Route path="*" element={<CatalogContent />} />
-      </Routes>
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoadingSkeleton />}>
+        <Routes>
+          <Route path="/" element={<CatalogContent />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/product/:productId" element={<ProductDetailPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/refund-policy" element={<RefundPolicyPage />} />
+          <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
+          <Route path="/terms" element={<TermsPolicyPage />} />
+          <Route path="/terms-and-conditions" element={<TermsPolicyPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/category/:themeSlug" element={<CatalogContent />} />
+          <Route path="/room/:roomSlug" element={<CatalogContent />} />
+          <Route path="/wishlist" element={<CatalogContent />} />
+          <Route path="/kids-wallpapers" element={<CatalogContent />} />
+          <Route path="/wall-arts" element={<CatalogContent />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <LocationProvider>
-          <MainCatalogRoutes />
-          <LocationPermissionModal />
-        </LocationProvider>
-      </CartProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <CartProvider>
+          <LocationProvider>
+            <MainCatalogRoutes />
+            <LocationPermissionModal />
+          </LocationProvider>
+        </CartProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

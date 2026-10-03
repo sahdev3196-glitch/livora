@@ -67,3 +67,55 @@ export const verifyAndLookupPincode = async (pincodeInput) => {
     };
   }
 };
+
+/**
+ * Calculate estimated delivery turnaround time (TAT) based on Delhivery Zone and Mode (SURFACE or EXPRESS)
+ * Dispatched from Ahmedabad facility (PIN 380015)
+ */
+export const getEstimatedDelivery = (zone = 'C', mode = 'SURFACE', baseDate = new Date()) => {
+  const z = String(zone || 'C').toUpperCase();
+  let minDays = 3;
+  let maxDays = 5;
+  let transitDays = '3 – 4 Days (Insured Ground Courier)';
+
+  if (z.startsWith('A')) {
+    // Local / Intra-city (Ahmedabad to Ahmedabad)
+    minDays = 1;
+    maxDays = 2;
+    transitDays = '1 – 2 Days (Local Courier)';
+  } else if (z.startsWith('B')) {
+    // Regional / Intra-state (Gujarat - Surat, Vadodara, Rajkot, etc.)
+    minDays = 2;
+    maxDays = 3;
+    transitDays = '2 – 3 Days (Regional Courier)';
+  } else if (z.startsWith('C')) {
+    // Metros (Mumbai, Delhi-NCR, Bengaluru, Hyderabad, Kolkata, Chennai, Pune)
+    minDays = 3;
+    maxDays = 5;
+    transitDays = '3 – 4 Days (Express Metro Transit)';
+  } else if (z.startsWith('D')) {
+    // Rest of India
+    minDays = 4;
+    maxDays = 6;
+    transitDays = '4 – 6 Days (All India Courier)';
+  } else if (z.startsWith('E')) {
+    // Special zones (North East, J&K, Islands)
+    minDays = 6;
+    maxDays = 8;
+    transitDays = '6 – 8 Days (Special Zone Courier)';
+  }
+
+  const now = baseDate instanceof Date ? baseDate : new Date();
+  const minDate = new Date(now.getTime() + minDays * 24 * 60 * 60 * 1000);
+  const maxDate = new Date(now.getTime() + maxDays * 24 * 60 * 60 * 1000);
+  const formatShort = (d) => d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+
+  return {
+    zone: z,
+    mode: mode === 'EXPRESS' ? 'EXPRESS' : 'SURFACE',
+    daysRange: `${minDays} – ${maxDays} Days`,
+    dateRange: `${formatShort(minDate)} – ${formatShort(maxDate)}`,
+    expectedDate: formatShort(maxDate),
+    transitDays
+  };
+};

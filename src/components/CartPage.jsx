@@ -266,9 +266,9 @@ export default function CartPage() {
                   </div>
 
                   <div className="flex justify-between items-center text-slate-600">
-                    <span>Estimated Shipping</span>
-                    <span className="text-xs text-slate-500 font-medium">
-                      Calculated at checkout
+                    <span>Pan-India Delivery</span>
+                    <span className="text-xs text-emerald-700 font-bold bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
+                      FREE
                     </span>
                   </div>
 
@@ -281,8 +281,8 @@ export default function CartPage() {
                 {/* Total Row */}
                 <div className="pt-4 border-t border-slate-100 flex justify-between items-end">
                   <div>
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Items Subtotal</span>
-                    <span className="text-xs text-slate-400 font-medium">+ ₹200 delivery at checkout</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Total Payable</span>
+                    <span className="text-xs text-emerald-600 font-medium">Free Doorstep Delivery Included</span>
                   </div>
                   <span className="font-serif font-extrabold text-2xl sm:text-3xl text-slate-900">
                     ₹{subtotal.toLocaleString('en-IN')}

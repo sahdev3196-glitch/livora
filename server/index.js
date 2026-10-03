@@ -554,6 +554,269 @@ app.post('/api/payment/create-order', createCashfreeOrderHandler);
 app.post('/api/verify-payment', verifyCashfreeOrderHandler);
 app.post('/api/payment/verify', verifyCashfreeOrderHandler);
 
+// --- DELHIVERY LOGISTICS INTEGRATION ---
+const getDelhiveryConfig = () => {
+  const token = process.env.DELHIVERY_API_TOKEN || '3ff08037e22a022368262724e11f54781f0b2109';
+  const originPin = (process.env.DELHIVERY_ORIGIN_PINCODE && process.env.DELHIVERY_ORIGIN_PINCODE !== '411046') ? process.env.DELHIVERY_ORIGIN_PINCODE : '380015';
+  const warehouseName = (process.env.DELHIVERY_WAREHOUSE_NAME && !process.env.DELHIVERY_WAREHOUSE_NAME.includes('Pune')) ? process.env.DELHIVERY_WAREHOUSE_NAME : 'LIVORA Print Studio Ahmedabad';
+  const pickupAddress = process.env.DELHIVERY_PICKUP_ADDRESS || '1st Floor, BRTS Stand, above TVS Vtech Showroom, opposite L Colony, H Colony, Ambawadi, Ahmedabad, Gujarat 380015';
+  const baseUrl = 'https://track.delhivery.com';
+  return { token, originPin, warehouseName, pickupAddress, baseUrl };
+};
+
+// 1. Check Delhivery Pincode Serviceability & COD/Prepaid support
+app.get('/api/delhivery/check-pincode', async (req, res) => {
+  try {
+    const { pincode } = req.query;
+    if (!pincode || !/^[1-9][0-9]{5}$/.test(pincode)) {
+      return res.status(400).json({ error: 'Valid 6-digit Indian PIN code required' });
+    }
+
+    const { token, baseUrl } = getDelhiveryConfig();
+    const response = await fetch(`${baseUrl}/c/api/pin-codes/json/?filter_codes=${pincode}`, {
+      headers: {
+        'Authorization': `Token ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    const postal = data?.delivery_codes?.[0]?.postal_code;
+
+    if (postal) {
+      return res.json({
+        success: true,
+        pincode,
+        serviceable: postal.pre_paid === 'Y' || postal.cod === 'Y',
+        prepaid: postal.pre_paid === 'Y',
+        cod: postal.cod === 'Y',
+        city: postal.district || '',
+        state: postal.state_code || '',
+        sortCode: postal.sort_code || ''
+      });
+    }
+
+    return res.json({
+      success: false,
+      pincode,
+      serviceable: false,
+      error: 'Location currently not serviceable by Delhivery express network'
+    });
+  } catch (err) {
+    console.error('[Delhivery] Pincode Check Error:', err);
+    res.status(500).json({ error: 'Failed to verify Delhivery serviceability' });
+  }
+});
+
+// Helper: Calculate delivery turnaround time (TAT) based on Delhivery Zone and Mode
+const calculateDeliveryEstimate = (zone = 'C', mode = 'SURFACE') => {
+  const z = String(zone || 'C').toUpperCase();
+  const isExpress = String(mode).toUpperCase() === 'EXPRESS';
+  let minDays = isExpress ? 2 : 4;
+  let maxDays = isExpress ? 4 : 6;
+  let transitDays = isExpress ? '1 – 2 Days (Air Transit)' : '3 – 4 Days (Ground Transit)';
+
+  if (z.startsWith('A')) {
+    // Local / Intra-city (Ahmedabad to Ahmedabad)
+    minDays = isExpress ? 1 : 2;
+    maxDays = isExpress ? 2 : 3;
+    transitDays = isExpress ? '1 Day (Air Express)' : '1 – 2 Days (Local Ground)';
+  } else if (z.startsWith('B')) {
+    // Regional / Intra-state (Gujarat - Surat, Vadodara, Rajkot, etc.)
+    minDays = isExpress ? 2 : 3;
+    maxDays = isExpress ? 3 : 4;
+    transitDays = isExpress ? '1 – 2 Days (Air Express)' : '2 Days (Regional Ground)';
+  } else if (z.startsWith('C')) {
+    // Metros (Mumbai, Delhi-NCR, Bengaluru, Hyderabad, Kolkata, Chennai)
+    minDays = isExpress ? 2 : 4;
+    maxDays = isExpress ? 3 : 5;
+    transitDays = isExpress ? '2 Days (Air Priority)' : '3 – 5 Days (Surface Express)';
+  } else if (z.startsWith('D')) {
+    // Rest of India
+    minDays = isExpress ? 3 : 5;
+    maxDays = isExpress ? 5 : 7;
+    transitDays = isExpress ? '2 – 3 Days (Air Priority)' : '4 – 6 Days (Surface Ground)';
+  } else if (z.startsWith('E')) {
+    // Special zones (North East, J&K, Islands)
+    minDays = isExpress ? 5 : 7;
+    maxDays = isExpress ? 7 : 10;
+    transitDays = isExpress ? '3 – 5 Days (Air Priority)' : '6 – 8 Days (Surface Ground)';
+  }
+
+  const now = new Date();
+  const minDate = new Date(now.getTime() + minDays * 24 * 60 * 60 * 1000);
+  const maxDate = new Date(now.getTime() + maxDays * 24 * 60 * 60 * 1000);
+  const formatShort = (d) => d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+
+  return {
+    daysRange: `${minDays} – ${maxDays} Days`,
+    dateRange: `${formatShort(minDate)} – ${formatShort(maxDate)}`,
+    expectedDate: formatShort(maxDate),
+    transitDays
+  };
+};
+
+// 2. Dynamic Delhivery Rate Calculator based on Pincode, Mode, and Weight
+// Calculates BOTH Surface and Air Express options concurrently
+app.get('/api/delhivery/calculate-rate', async (req, res) => {
+  try {
+    const { destinationPincode, paymentMode = 'Pre-paid', weight = 1000 } = req.query;
+
+    if (!destinationPincode || !/^[1-9][0-9]{5}$/.test(destinationPincode)) {
+      return res.status(400).json({ error: 'Valid destination PIN code required' });
+    }
+
+    const { token, originPin, baseUrl } = getDelhiveryConfig();
+    const pt = paymentMode.toLowerCase() === 'cod' ? 'COD' : 'Pre-paid';
+    const cgm = Math.max(500, parseInt(weight, 10) || 1000);
+
+    console.log(`[Delhivery] Calculating rates from Ahmedabad (${originPin}) to ${destinationPincode} (${pt}, ${cgm}g)...`);
+
+    const [surfaceRes, expressRes] = await Promise.all([
+      fetch(`${baseUrl}/api/kinko/v1/invoice/charges/.json?md=S&ss=Delivered&d_pin=${destinationPincode}&o_pin=${originPin}&cgm=${cgm}&pt=${pt}`, {
+        headers: { 'Authorization': `Token ${token}` }
+      }).then(r => r.json()).catch(() => null),
+      fetch(`${baseUrl}/api/kinko/v1/invoice/charges/.json?md=E&ss=Delivered&d_pin=${destinationPincode}&o_pin=${originPin}&cgm=${cgm}&pt=${pt}`, {
+        headers: { 'Authorization': `Token ${token}` }
+      }).then(r => r.json()).catch(() => null)
+    ]);
+
+    const surfaceItem = Array.isArray(surfaceRes) ? surfaceRes[0] : null;
+    const expressItem = Array.isArray(expressRes) ? expressRes[0] : null;
+
+    if (!surfaceItem && !expressItem) {
+      return res.status(400).json({
+        success: false,
+        error: 'Unable to calculate live Delhivery rates for this route'
+      });
+    }
+
+    const surfaceRate = surfaceItem?.total_amount !== undefined ? Math.round(Number(surfaceItem.total_amount)) : 95;
+    const expressRate = expressItem?.total_amount !== undefined ? Math.round(Number(expressItem.total_amount)) : Math.round(surfaceRate * 1.35);
+
+    const surfaceEstimate = calculateDeliveryEstimate(surfaceItem?.zone || 'C1', 'SURFACE');
+    const expressEstimate = calculateDeliveryEstimate(expressItem?.zone || 'C', 'EXPRESS');
+
+    const options = {
+      SURFACE: {
+        mode: 'SURFACE',
+        name: 'Delhivery Standard Surface',
+        badge: 'Cost-Effective Economy',
+        rate: surfaceRate,
+        exactAmount: surfaceItem?.total_amount || surfaceRate,
+        zone: surfaceItem?.zone || 'C1',
+        codCharge: surfaceItem?.charge_COD || 0,
+        estimatedDays: surfaceEstimate.daysRange,
+        estimatedDeliveryDate: surfaceEstimate.dateRange,
+        transitDays: surfaceEstimate.transitDays
+      },
+      EXPRESS: {
+        mode: 'EXPRESS',
+        name: 'Delhivery Air Express',
+        badge: 'Fastest Priority Air',
+        rate: expressRate,
+        exactAmount: expressItem?.total_amount || expressRate,
+        zone: expressItem?.zone || 'C',
+        codCharge: expressItem?.charge_COD || 0,
+        estimatedDays: expressEstimate.daysRange,
+        estimatedDeliveryDate: expressEstimate.dateRange,
+        transitDays: expressEstimate.transitDays
+      }
+    };
+
+    return res.json({
+      success: true,
+      origin: originPin,
+      originCity: 'Ahmedabad',
+      options,
+      defaultMode: 'SURFACE',
+      // Default to SURFACE values
+      shippingRate: surfaceRate,
+      zone: surfaceItem?.zone || 'C1',
+      codCharge: surfaceItem?.charge_COD || 0,
+      weight: surfaceItem?.charged_weight || cgm,
+      estimatedDays: surfaceEstimate.daysRange,
+      estimatedDeliveryDate: surfaceEstimate.dateRange,
+      transitDays: surfaceEstimate.transitDays
+    });
+  } catch (err) {
+    console.error('[Delhivery] Rate Calc Error:', err);
+    res.status(500).json({ error: 'Failed to calculate live shipping charges' });
+  }
+});
+
+// 3. Create Delhivery Shipment / Booking (Prepaid or COD)
+app.post('/api/delhivery/create-shipment', async (req, res) => {
+  try {
+    const { order, customer, items, paymentMode = 'Pre-paid', shippingMode = 'SURFACE', codAmount = 0, weight = 1000 } = req.body;
+    const { token, warehouseName, pickupAddress, baseUrl } = getDelhiveryConfig();
+
+    const orderId = order?.id || ('LIV_' + Date.now());
+    const customerPhone = customer?.phone ? String(customer.phone).replace(/\D/g, '').slice(-10) : '917821085631';
+    const isCod = String(paymentMode).toUpperCase() === 'COD';
+    const isExpress = String(shippingMode).toUpperCase() === 'EXPRESS';
+
+    const shipmentPayload = {
+      shipments: [
+        {
+          name: customer?.name || 'Customer',
+          add: customer?.address || 'Standard Delivery',
+          pin: customer?.pincode,
+          city: customer?.city || '',
+          state: customer?.state || '',
+          country: 'India',
+          phone: customerPhone,
+          order: orderId,
+          payment_mode: isCod ? 'COD' : 'Pre-paid',
+          shipping_mode: isExpress ? 'Express' : 'Surface',
+          products_desc: `Custom Wallpaper Mural (${items?.length || 1} roll set)`,
+          total_amount: order?.totalAmount || 0,
+          cod_amount: isCod ? (codAmount || order?.totalAmount || 0) : 0,
+          weight: weight || 1000,
+          seller_name: 'LIVORA Wallpaper Studio',
+          seller_add: pickupAddress,
+          quantity: String(items?.length || 1)
+        }
+      ],
+      pickup_location: {
+        name: warehouseName
+      }
+    };
+
+    console.log(`[Delhivery] Booking shipment for ${orderId} (${shipmentPayload.shipments[0].payment_mode}, ${shipmentPayload.shipments[0].shipping_mode}) from ${warehouseName}...`);
+
+    const body = 'format=json&data=' + encodeURIComponent(JSON.stringify(shipmentPayload));
+    const delRes = await fetch(`${baseUrl}/api/cmu/create.json`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${token}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body
+    });
+
+    const resData = await delRes.json();
+    const pkg = resData?.packages?.[0];
+
+    const waybill = pkg?.waybill || '';
+    const trackingNumber = waybill || ('LIV-DEL-' + Math.floor(10000000 + Math.random() * 90000000));
+    const trackingUrl = waybill ? `https://www.delhivery.com/track/package/${waybill}` : `https://track.delhivery.com`;
+
+    return res.json({
+      success: resData.success || Boolean(waybill),
+      waybill,
+      trackingNumber,
+      trackingUrl,
+      sortCode: pkg?.sort_code || 'PUN/SDW',
+      uploadWbn: resData.upload_wbn,
+      delhiveryResponse: resData
+    });
+  } catch (err) {
+    console.error('[Delhivery] Create Shipment Error:', err);
+    res.status(500).json({ error: 'Failed to create Delhivery shipment' });
+  }
+});
+
 // Manual or COD Orders fallback
 app.post('/api/orders', (req, res) => {
   try {

@@ -15,7 +15,7 @@ export default function Footer() {
               LIVORA
             </span>
             <p className="text-xs text-slate-600 leading-relaxed font-light">
-              India's premier luxury custom wallpaper studio. We print custom made-to-measure wall murals starting at ₹40/sq.ft with organic inks & multiple paper textures.
+              India's premier luxury custom wallpaper studio. We print custom made-to-measure wall murals starting at ₹120/sq.ft with organic inks & multiple paper textures.
             </p>
             <div className="flex items-center gap-3 text-xs text-slate-800 font-semibold pt-2">
               <Shield className="w-4 h-4 text-amber-700" /> 100% Quality Assurance

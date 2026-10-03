@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const parsed = JSON.parse(savedUser);
         // Clean up legacy mock dummy user if it was saved previously
-        if (parsed.email === 'user.google@gmail.com' || parsed.id?.startsWith('usr_g_')) {
+        if (parsed.email === 'user.google@gmail.com' || String(parsed.id || '').startsWith('usr_g_')) {
           localStorage.removeItem('livora_user');
           localStorage.removeItem('livora_token');
           setUser(null);

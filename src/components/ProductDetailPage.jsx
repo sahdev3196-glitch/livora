@@ -1,28 +1,72 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Heart, Star, Sparkles, Ruler, ChevronRight, ChevronLeft, ChevronDown, ArrowLeft, Check, ShieldCheck, Truck, Award, ShoppingBag, Info } from 'lucide-react';
-import { PAPER_OPTIONS, INITIAL_WALLPAPERS } from '../data/wallpapers';
+import { Heart, Star, Sparkles, Ruler, ChevronRight, ChevronLeft, ChevronDown, ArrowLeft, Check, ShieldCheck, Truck, Award, ShoppingBag, Info, Calendar, Clock, MapPin, Plane } from 'lucide-react';
+import { PAPER_OPTIONS, INITIAL_WALLPAPERS, findWallpaper } from '../data/wallpapers';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { verifyAndLookupPincode, getEstimatedDelivery } from '../utils/pincodeUtils';
 import ProductCard from './ProductCard';
 import Header from './Header';
 import Footer from './Footer';
+import NotFoundPage from './NotFoundPage';
 
 export default function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { addToCart, wishlist, toggleWishlist } = useCart();
+  const { addToCart, isWishlisted, toggleWishlist } = useCart();
   const { user } = useAuth();
   const scrollRef = useRef(null);
 
-  const [product, setProduct] = useState(null);
-  const [activeImage, setActiveImage] = useState('');
+  const [product, setProduct] = useState(() => findWallpaper(productId));
+  const [activeImage, setActiveImage] = useState(() => {
+    const initProd = findWallpaper(productId);
+    return initProd?.roomMockup || initProd?.image || '';
+  });
   const [unit, setUnit] = useState('Inches');
   const [width, setWidth] = useState('');
   const [height, setHeight] = useState('');
   const [selectedPaper, setSelectedPaper] = useState(PAPER_OPTIONS[0]);
   const [isEmbossed, setIsEmbossed] = useState(false);
   const [isGoldFoil, setIsGoldFoil] = useState(false);
+
+  // Live Delivery Estimation State (Dispatched from Ahmedabad)
+  const initialPin = String(user?.pincode || '380015').replace(/\D/g, '').slice(0, 6) || '380015';
+  const [deliveryPincode, setDeliveryPincode] = useState(initialPin);
+  const [deliveryEstimate, setDeliveryEstimate] = useState(() => {
+    const z = initialPin.startsWith('380') ? 'A' : (initialPin.startsWith('3') ? 'B' : 'C');
+    return getEstimatedDelivery(z, 'SURFACE');
+  });
+  const [deliveryLoading, setDeliveryLoading] = useState(false);
+  const [deliveryCity, setDeliveryCity] = useState(() => String(user?.city || 'Ahmedabad'));
+
+  const handleCheckDelivery = async (pin) => {
+    const raw = String(pin || deliveryPincode || '').replace(/\D/g, '').slice(0, 6);
+    if (raw.length !== 6) return;
+    setDeliveryLoading(true);
+    try {
+      const res = await verifyAndLookupPincode(raw);
+      if (res && res.valid) {
+        if (res.city) setDeliveryCity(String(res.city));
+        const z = raw.startsWith('380') ? 'A' : (raw.startsWith('3') ? 'B' : 'C');
+        setDeliveryEstimate(getEstimatedDelivery(z, 'SURFACE'));
+      }
+    } catch (e) {
+      console.warn('Pincode check error:', e);
+    } finally {
+      setDeliveryLoading(false);
+    }
+  };
+
+  // Sync user's default pincode on login
+  useEffect(() => {
+    const userPin = String(user?.pincode || '').replace(/\D/g, '').slice(0, 6);
+    if (userPin.length === 6) {
+      setDeliveryPincode(userPin);
+      if (user?.city) setDeliveryCity(String(user.city));
+      const z = userPin.startsWith('380') ? 'A' : (userPin.startsWith('3') ? 'B' : 'C');
+      setDeliveryEstimate(getEstimatedDelivery(z, 'SURFACE'));
+    }
+  }, [user]);
 
   // Sync checkboxes if paper option changes
   useEffect(() => {
@@ -35,22 +79,22 @@ export default function ProductDetailPage() {
   }, [selectedPaper]);
 
   useEffect(() => {
-    // Find product from initial catalog or fetch API
-    const found = INITIAL_WALLPAPERS.find(p => p.id === productId || p.code === productId);
+    // Find product using robust resolver
+    const found = findWallpaper(productId);
     if (found) {
       setProduct(found);
-      setActiveImage(found.roomMockup || found.image);
+      setActiveImage(found.roomMockup || found.image || '');
     } else {
       const apiUrl = import.meta.env.VITE_API_URL;
       if (apiUrl) {
         fetch(`${apiUrl}/api/products`)
           .then(res => res.json())
           .then(data => {
-            if (data.products) {
-              const apiFound = data.products.find(p => p.id === productId || p.code === productId);
+            if (data && data.products) {
+              const apiFound = findWallpaper(productId, data.products);
               if (apiFound) {
                 setProduct(apiFound);
-                setActiveImage(apiFound.roomMockup || apiFound.image);
+                setActiveImage(apiFound.roomMockup || apiFound.image || '');
               }
             }
           })
@@ -63,10 +107,10 @@ export default function ProductDetailPage() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (product) {
-      document.title = `${product.title} — Custom Wallpaper starting at ₹40/sqft | LIVORA`;
+      document.title = `${product.title || 'Custom Wallpaper'} — Custom Wallpaper starting at ₹120/sqft | LIVORA`;
       const metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
-        metaDesc.setAttribute('content', `Customize ${product.title} made-to-measure wallpaper mural for your walls. ${product.theme} collection, starting at ₹40/sqft. Pan-India delivery.`);
+        metaDesc.setAttribute('content', `Customize ${product.title || ''} made-to-measure wallpaper mural for your walls. ${product.theme || ''} collection, starting at ₹120/sqft. Pan-India delivery.`);
       }
     }
   }, [productId, product]);
@@ -79,26 +123,10 @@ export default function ProductDetailPage() {
   };
 
   if (!product) {
-    return (
-      <div className="min-h-screen bg-slate-50/50 flex flex-col font-sans text-slate-800">
-        <Header />
-        <main className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-          <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 mb-4">
-            <Info className="w-8 h-8" />
-          </div>
-          <h2 className="font-serif font-bold text-xl text-slate-900">Product Not Found</h2>
-          <p className="text-xs text-slate-500 mt-1 max-w-sm">The requested custom wallpaper design could not be found or has been moved.</p>
-          <Link to="/" className="mt-4 inline-flex items-center gap-2 bg-sky-500 text-white text-xs font-bold px-6 py-3 rounded-xl hover:bg-sky-600 transition shadow-md shadow-sky-500/20">
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Wallpaper Collection</span>
-          </Link>
-        </main>
-        <Footer />
-      </div>
-    );
+    return <NotFoundPage isProductNotFound={true} missingId={productId} />;
   }
 
-  const wishlisted = wishlist.some(item => item.id === product.id);
+  const wishlisted = Boolean(product?.id && isWishlisted && isWishlisted(product.id));
 
   // Dimension numeric parsing
   const wNum = parseFloat(width) || 0;
@@ -123,9 +151,9 @@ export default function ProductDetailPage() {
   const isMinBillApplied = hasDimensions && roundedSqFt < 12;
 
   // Current effective rate per sq ft based on paper selection + enhancements
-  const baseRate = selectedPaper ? selectedPaper.regularPrice : 40;
-  const embossRate = (isEmbossed && selectedPaper?.hasEmbossed) ? 32 : 0;
-  const foilRate = (isGoldFoil && selectedPaper?.id !== 'gold-foil-on-non-woven') ? 48 : 0;
+  const baseRate = selectedPaper ? selectedPaper.regularPrice : 120;
+  const embossRate = (isEmbossed && selectedPaper?.hasEmbossed) ? 96 : 0;
+  const foilRate = (isGoldFoil && selectedPaper?.id !== 'gold-foil-on-non-woven') ? 144 : 0;
   const currentPricePerSqFt = baseRate + embossRate + foilRate;
 
   // Selected Finish Display Label
@@ -168,9 +196,11 @@ export default function ProductDetailPage() {
   ].filter(Boolean)));
 
   // Related Products Filtering (Same theme or room, excluding current item)
-  const sameCategoryProducts = INITIAL_WALLPAPERS.filter(p => p.id !== product.id && (p.theme === product.theme || p.room === product.room));
-  const otherProducts = INITIAL_WALLPAPERS.filter(p => p.id !== product.id && !sameCategoryProducts.some(sp => sp.id === p.id));
+  const sameCategoryProducts = INITIAL_WALLPAPERS.filter(p => p && p.id !== product?.id && ((product?.theme && p.theme === product.theme) || (product?.room && p.room === product.room)));
+  const otherProducts = INITIAL_WALLPAPERS.filter(p => p && p.id !== product?.id && !sameCategoryProducts.some(sp => sp.id === p.id));
   const relatedProducts = [...sameCategoryProducts, ...otherProducts].slice(0, 10);
+
+  const categorySlug = product?.theme ? product.theme.toLowerCase().replace(/[\s\-_&]+/g, '-') : 'all';
 
   return (
     <div className="min-h-screen bg-slate-50/40 flex flex-col font-sans text-slate-800">
@@ -183,7 +213,7 @@ export default function ProductDetailPage() {
         <nav className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-6">
           <Link to="/" className="hover:text-sky-700 transition">Home</Link>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-          <Link to={`/category/${product.theme.toLowerCase()}`} className="hover:text-sky-700 transition">{product.theme}</Link>
+          <Link to={`/category/${categorySlug}`} className="hover:text-sky-700 transition">{product.theme || 'Collection'}</Link>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
           <span className="text-sky-900 font-bold truncate max-w-xs">{product.title}</span>
         </nav>
@@ -418,7 +448,7 @@ export default function ProductDetailPage() {
                     <div className="flex items-center justify-between gap-1">
                       <span className="text-xs font-bold text-slate-900">Embossed 3D</span>
                       <span className="text-[10px] font-extrabold font-mono text-sky-900 bg-sky-100/70 border border-sky-200/80 px-1.5 py-0.2 rounded">
-                        +₹32/sqft
+                        +₹96/sqft
                       </span>
                     </div>
                     <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
@@ -455,7 +485,7 @@ export default function ProductDetailPage() {
                     <div className="flex items-center justify-between gap-1">
                       <span className="text-xs font-bold text-slate-900">Golden Foil</span>
                       <span className="text-[10px] font-extrabold font-mono text-amber-900 bg-amber-100/80 border border-amber-300/80 px-1.5 py-0.2 rounded">
-                        {selectedPaper.id === 'gold-foil-on-non-woven' ? 'Included' : '+₹48/sqft'}
+                        {selectedPaper.id === 'gold-foil-on-non-woven' ? 'Included' : '+₹144/sqft'}
                       </span>
                     </div>
                     <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">
@@ -595,6 +625,76 @@ export default function ProductDetailPage() {
               <ShoppingBag className="w-4 h-4" />
               <span>{hasDimensions ? (user ? 'ADD TO CART & VIEW CART' : 'LOGIN TO ADD TO CART') : 'ENTER DIMENSIONS TO CONTINUE'}</span>
             </button>
+
+            {/* Live Delivery & Dispatch Estimator */}
+            <div className="bg-sky-50/70 border border-sky-200/80 rounded-2xl p-4 space-y-3 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Truck className="w-4 h-4 text-sky-600" />
+                  <span>Check Estimated Delivery</span>
+                </span>
+                <span className="text-[10px] text-emerald-800 bg-emerald-100 font-bold px-2.5 py-0.5 rounded-full border border-emerald-200/60 flex items-center gap-1">
+                  <Check className="w-3 h-3 text-emerald-600" /> FREE Delivery
+                </span>
+              </div>
+
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="Enter 6-digit PIN code"
+                    value={deliveryPincode}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setDeliveryPincode(v);
+                      if (v.length === 6) handleCheckDelivery(v);
+                    }}
+                    className="w-full bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCheckDelivery(deliveryPincode)}
+                  disabled={deliveryLoading || deliveryPincode.length !== 6}
+                  className="bg-sky-500 hover:bg-sky-600 disabled:bg-slate-200 text-white font-bold px-4 py-2 rounded-xl transition text-xs cursor-pointer shadow-xs"
+                >
+                  {deliveryLoading ? 'Checking...' : 'Check'}
+                </button>
+              </div>
+
+              {deliveryPincode.length === 6 && (
+                <div className="bg-white rounded-xl p-3 border border-sky-200/60 space-y-2 shadow-2xs">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-sky-600" />
+                        <span>Estimated Doorstep Delivery:</span>
+                      </span>
+                      <span className="font-bold text-slate-900">
+                        {deliveryEstimate?.dateRange} ({deliveryEstimate?.daysRange})
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                        <Truck className="w-3.5 h-3.5 text-sky-600" />
+                        <span>Transit Turnaround:</span>
+                      </span>
+                      <span className="font-semibold text-slate-700">
+                        {deliveryEstimate?.transitDays || '3 – 5 Days'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-100 text-slate-500">
+                    <span className="text-emerald-700 font-bold flex items-center gap-1">
+                      <Check className="w-3 h-3 text-emerald-600" /> FREE Delivery to {deliveryCity || 'your location'}
+                    </span>
+                    <span>Dispatched from Ahmedabad Facility</span>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Custom Made-to-Measure & Free Reprint Guarantee Banner */}
             <div className="bg-sky-50/70 border border-sky-200/80 rounded-2xl p-3.5 space-y-2 text-[11px] text-slate-700">

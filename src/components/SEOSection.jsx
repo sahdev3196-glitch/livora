@@ -8,7 +8,7 @@ export default function SEOSection() {
   const faqs = [
     {
       q: 'What is the starting price for LIVORA custom wallpapers?',
-      a: 'LIVORA custom made-to-order wallpapers start at just ₹40 per square foot for Non Woven Wallpaper, HD PVC Paper, and Self Adhesive Vinyl. Premium options include Non Tearable Feather (₹56/sqft), Texture Canvas & Sandstone (₹96/sqft), Pure Canvas Jointless 122" (₹96/sqft), and Gold Foil (₹88/sqft) with embossed 3D upgrade available.'
+      a: 'LIVORA custom made-to-order wallpapers start at just ₹120 per square foot for Non Woven Wallpaper, HD PVC Paper, and Self Adhesive Vinyl. Premium options include Non Tearable Feather (₹168/sqft), Texture Canvas & Sandstone (₹288/sqft), Pure Canvas Jointless 122" (₹288/sqft), and Gold Foil (₹264/sqft) with embossed 3D upgrade available.'
     },
     {
       q: 'What is the difference between Regular Print and Embossed 3D Print?',
@@ -83,7 +83,7 @@ export default function SEOSection() {
             </div>
             <h3 className="font-serif font-bold text-base text-slate-900">11 Premium Substrates</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Choose from Non Woven, Feather, Canvas, Jointless 122" Fabric, Vinyl & Gold Foil starting at ₹40/sqft.
+              Choose from Non Woven, Feather, Canvas, Jointless 122" Fabric, Vinyl & Gold Foil starting at ₹120/sqft.
             </p>
           </div>
 
@@ -109,7 +109,7 @@ export default function SEOSection() {
                   Price Transparency
                 </span>
                 <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                  Starting at ₹40/sq.ft
+                  Starting at ₹120/sq.ft
                 </span>
               </div>
               <h3 className="font-serif font-bold text-xl sm:text-2xl text-slate-900 mt-1">
@@ -121,11 +121,11 @@ export default function SEOSection() {
             <div className="flex items-center gap-2 flex-wrap text-xs">
               <span className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl font-medium text-slate-700">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                Standard: <strong className="text-slate-900 font-serif">₹40/sqft</strong>
+                Standard: <strong className="text-slate-900 font-serif">₹120/sqft</strong>
               </span>
               <span className="inline-flex items-center gap-1.5 bg-sky-50/70 border border-sky-200 px-3 py-1.5 rounded-xl font-medium text-sky-900">
                 <span className="w-2 h-2 rounded-full bg-sky-500"></span>
-                3D Embossed: <strong className="text-sky-950 font-serif">From ₹72/sqft</strong>
+                3D Embossed: <strong className="text-sky-950 font-serif">From ₹216/sqft</strong>
               </span>
               <span className="inline-flex items-center gap-1.5 bg-amber-50/70 border border-amber-200 px-3 py-1.5 rounded-xl font-medium text-amber-900">
                 <span className="w-2 h-2 rounded-full bg-amber-500"></span>

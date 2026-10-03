@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, CreditCard, Lock, Smartphone, ChevronRight, ArrowLeft, Building2, CheckCircle2, Award, AlertCircle, Sparkles } from 'lucide-react';
+import { ShieldCheck, CreditCard, Lock, Smartphone, ChevronRight, ArrowLeft, Building2, CheckCircle2, Award, AlertCircle, Sparkles, Truck, Banknote, Package, Calendar, Clock, Plane } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { loadCashfreeScript } from '../utils/cashfree';
 import { saveOrderToFirestore } from '../services/firestoreService';
-import { verifyAndLookupPincode } from '../utils/pincodeUtils';
+import { verifyAndLookupPincode, getEstimatedDelivery } from '../utils/pincodeUtils';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -14,8 +14,14 @@ export default function CheckoutPage() {
   const { user, updateUserProfile } = useAuth();
   const navigate = useNavigate();
 
-  const deliveryCharge = 200;
-  const totalPayable = subtotal + deliveryCharge;
+  const deliveryCharge = 0; // 100% Free Pan-India Delivery
+  const [shippingZone, setShippingZone] = useState('');
+  const [shippingMode] = useState('SURFACE');
+  const [delhiveryLoading, setDelhiveryLoading] = useState(false);
+  const [estimatedDelivery, setEstimatedDelivery] = useState(() => getEstimatedDelivery('C1', 'SURFACE'));
+  const [paymentMethod] = useState('ONLINE'); // 'ONLINE' (Cashfree Gateway)
+
+  const totalPayable = subtotal;
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -28,6 +34,46 @@ export default function CheckoutPage() {
   const [pincodeStatus, setPincodeStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const calculateDelhiveryShipping = async (targetPincode) => {
+    if (!/^[1-9][0-9]{5}$/.test(targetPincode)) return;
+    setDelhiveryLoading(true);
+    try {
+      const apiBase = getApiBaseUrl();
+      const pt = 'Pre-paid';
+      const weight = Math.max(1000, cartItems.length * 1000);
+
+      const [pincodeRes, rateRes] = await Promise.all([
+        fetch(`${apiBase}/api/delhivery/check-pincode?pincode=${targetPincode}`).then(r => r.json()).catch(() => null),
+        fetch(`${apiBase}/api/delhivery/calculate-rate?destinationPincode=${targetPincode}&paymentMode=${pt}&weight=${weight}`).then(r => r.json()).catch(() => null)
+      ]);
+
+      if (rateRes && rateRes.success) {
+        const chosen = rateRes.options?.SURFACE || rateRes.options?.EXPRESS;
+        if (chosen) {
+          setShippingZone(chosen.zone || '');
+          setEstimatedDelivery({
+            days: chosen.estimatedDays,
+            dateRange: chosen.estimatedDeliveryDate,
+            transit: chosen.transitDays
+          });
+        } else if (rateRes.zone) {
+          setShippingZone(rateRes.zone || '');
+          setEstimatedDelivery({
+            days: rateRes.estimatedDays || '3 – 5 Days',
+            dateRange: rateRes.estimatedDeliveryDate || '',
+            transit: rateRes.transitDays || '3 – 4 Days'
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Delhivery calculation error:', e);
+    } finally {
+      setDelhiveryLoading(false);
+    }
+  };
+
+
 
   const handlePincodeChange = async (val) => {
     const rawVal = val.replace(/\D/g, '').slice(0, 6);
@@ -45,6 +91,9 @@ export default function CheckoutPage() {
           valid: true,
           message: res.district ? `✓ Serviced Area: ${res.district}, ${res.state}` : '✓ Valid Indian PIN Code'
         });
+        const initialZone = rawVal.startsWith('380') ? 'A' : (rawVal.startsWith('3') ? 'B' : 'C');
+        setEstimatedDelivery(getEstimatedDelivery(initialZone, shippingMode));
+        calculateDelhiveryShipping(rawVal, paymentMethod);
       } else {
         setPincodeStatus({
           valid: false,
@@ -56,6 +105,10 @@ export default function CheckoutPage() {
     }
   };
 
+  const handlePaymentMethodSelect = (newMethod) => {
+    setPaymentMethod(newMethod);
+  };
+
   React.useEffect(() => {
     if (user) {
       if (!name && user.name) setName(user.name);
@@ -65,9 +118,10 @@ export default function CheckoutPage() {
       if (!city && user.city) setCity(user.city);
       if (user.state) setStateName(user.state);
       if (!pincode && user.pincode) {
-        setPincode(user.pincode);
-        if (user.pincode.length === 6) {
-          handlePincodeChange(user.pincode);
+        const pinStr = String(user.pincode).replace(/\D/g, '').slice(0, 6);
+        setPincode(pinStr);
+        if (pinStr.length === 6) {
+          handlePincodeChange(pinStr);
         }
       }
     }
@@ -82,7 +136,39 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  const finalizeSuccessfulOrder = async (orderId, paymentId, trackingNo) => {
+  const bookDelhiveryShipment = async (orderId, orderTotal, method, trackingNo) => {
+    try {
+      const apiBase = getApiBaseUrl();
+      const weight = Math.max(1000, cartItems.length * 1000);
+      const res = await fetch(`${apiBase}/api/delhivery/create-shipment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order: { id: orderId, totalAmount: orderTotal },
+          customer: {
+            name,
+            phone,
+            address: `${address}, ${city}, ${stateName} - ${pincode}`,
+            pincode,
+            city,
+            state: stateName
+          },
+          items: cartItems,
+          paymentMode: 'Pre-paid',
+          shippingMode: shippingMode,
+          codAmount: 0,
+          weight
+        })
+      });
+      const data = await res.json();
+      return data;
+    } catch (e) {
+      console.warn('Delhivery booking warning:', e);
+      return null;
+    }
+  };
+
+  const finalizeSuccessfulOrder = async (orderId, paymentId, trackingNo, method = 'CASHFREE', logistics = null) => {
     const successOrder = {
       id: orderId,
       createdAt: new Date().toISOString(),
@@ -99,15 +185,27 @@ export default function CheckoutPage() {
       items: cartItems,
       subtotal: subtotal,
       deliveryCharge: deliveryCharge,
+      shippingMode: shippingMode,
       totalAmount: totalPayable,
       paymentDetails: {
-        method: 'CASHFREE',
-        paymentId: paymentId || ('CF_' + orderId),
+        method: method,
+        paymentId: paymentId || `CF_${orderId}`,
         orderId: orderId,
         status: 'PAID'
       },
       status: 'PAID',
-      trackingNumber: trackingNo
+      trackingNumber: trackingNo,
+      logistics: logistics || {
+        carrier: 'DELHIVERY',
+        waybill: trackingNo,
+        trackingUrl: `https://www.delhivery.com/track/package/${trackingNo}`,
+        zone: shippingZone || 'C1',
+        shippingMode: shippingMode,
+        originCity: 'Ahmedabad',
+        originPincode: '380015',
+        estimatedDays: estimatedDelivery?.days || (shippingMode === 'EXPRESS' ? '2 – 4 Days' : '4 – 6 Days'),
+        estimatedDeliveryDate: estimatedDelivery?.dateRange || ''
+      }
     };
 
     // Save order to Firestore Database
@@ -214,6 +312,7 @@ export default function CheckoutPage() {
     setErrorMessage('');
     setLoading(true);
 
+    // --- PREPAID CASHFREE PAYMENT ---
     try {
       // Step 1: Ensure Cashfree SDK is loaded
       const isLoaded = await loadCashfreeScript();
@@ -224,7 +323,7 @@ export default function CheckoutPage() {
       }
 
       const orderId = 'LIV_' + Date.now() + '_' + Math.floor(1000 + Math.random() * 9000);
-      const trackingNo = 'LIV-EXP-' + Math.floor(10000000 + Math.random() * 90000000);
+      let trackingNo = 'LIV-DEL-' + Math.floor(10000000 + Math.random() * 90000000);
 
       // Step 2: Create authentic Cashfree Order via Backend API
       const apiBase = getApiBaseUrl();
@@ -278,9 +377,14 @@ export default function CheckoutPage() {
         }
 
         if (result.redirect) {
-          // If bank requires redirect
           console.log('Redirecting to bank authentication...');
           return;
+        }
+
+        // Auto-book Delhivery Prepaid shipment
+        const deliveryRes = await bookDelhiveryShipment(orderId, totalPayable, 'Pre-paid', trackingNo);
+        if (deliveryRes?.waybill) {
+          trackingNo = deliveryRes.waybill;
         }
 
         // Verify order on backend directly from Cashfree API
@@ -531,69 +635,110 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Step 2: Cashfree Payment Gateway */}
+              {/* Step 2: Payment Method (Cashfree 100% Encrypted Gateway) */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
                 <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
                   <span className="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-xs">2</span>
-                  <h2 className="font-serif font-bold text-lg text-slate-900">Payment Gateway</h2>
+                  <h2 className="font-serif font-bold text-lg text-slate-900">Payment Method</h2>
                 </div>
 
-                {/* Cashfree Single Dedicated Method */}
-                <div className="p-5 rounded-2xl border-2 border-sky-500 bg-sky-50/50 ring-2 ring-sky-500/20 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-sky-500 text-white flex items-center justify-center shadow-xs">
-                        <ShieldCheck className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-slate-900">Cashfree Secure Checkout</h3>
-                          <span className="text-[10px] font-bold bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                            Official Gateway
-                          </span>
+                <div>
+                  {/* Cashfree Online Payment Card */}
+                  <div
+                    className="p-5 rounded-2xl border-2 border-sky-500 bg-sky-50/50 ring-2 ring-sky-500/20 relative"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3.5">
+                        <div className="w-12 h-12 rounded-2xl bg-sky-500 text-white flex items-center justify-center shadow-xs shrink-0">
+                          <ShieldCheck className="w-6 h-6" />
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Pay securely with UPI, Credit / Debit Cards, NetBanking & Wallets
-                        </p>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm sm:text-base font-bold text-slate-900">100% Secure Online Payment</h3>
+                            <span className="text-[10px] font-bold bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                              Cashfree
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-600 mt-1">
+                            Pay securely via Instant UPI (Google Pay, PhonePe, Paytm), Credit & Debit Cards, NetBanking, and Wallets.
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <CheckCircle2 className="w-5 h-5 text-sky-600 shrink-0" />
-                  </div>
-
-                  {/* Payment Channel Badges */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-sky-200/60">
-                    <div className="bg-white/90 border border-sky-200/80 rounded-xl p-2.5 flex items-center gap-2 shadow-2xs">
-                      <Smartphone className="w-4 h-4 text-sky-600 shrink-0" />
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-800">Instant UPI</p>
-                        <p className="text-[9px] text-slate-500">GPay, PhonePe, Paytm</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-white/90 border border-sky-200/80 rounded-xl p-2.5 flex items-center gap-2 shadow-2xs">
-                      <CreditCard className="w-4 h-4 text-sky-600 shrink-0" />
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-800">Cards</p>
-                        <p className="text-[9px] text-slate-500">Visa, MC, RuPay</p>
+                      <div className="w-5 h-5 rounded-full bg-sky-500 text-white flex items-center justify-center shrink-0 mt-1">
+                        <div className="w-2 h-2 rounded-full bg-white" />
                       </div>
                     </div>
 
-                    <div className="bg-white/90 border border-sky-200/80 rounded-xl p-2.5 flex items-center gap-2 shadow-2xs">
-                      <Building2 className="w-4 h-4 text-sky-600 shrink-0" />
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-800">NetBanking</p>
-                        <p className="text-[9px] text-slate-500">50+ Indian Banks</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-white/90 border border-sky-200/80 rounded-xl p-2.5 flex items-center gap-2 shadow-2xs">
-                      <Sparkles className="w-4 h-4 text-sky-600 shrink-0" />
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-800">Wallets</p>
-                        <p className="text-[9px] text-slate-500">Cred, Paytm, Mobikwik</p>
-                      </div>
+                    <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-sky-200/60 text-[11px] text-slate-600">
+                      <span className="flex items-center gap-1.5 font-medium text-sky-900">
+                        <Smartphone className="w-3.5 h-3.5 text-sky-600" />
+                        <span>Zero Extra Surcharge</span>
+                      </span>
+                      <span className="flex items-center gap-1.5 font-medium text-emerald-800">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>256-bit Bank Grade Encryption</span>
+                      </span>
+                      <span className="text-slate-400">•</span>
+                      <span className="text-slate-500">Instant Order Confirmation & Dispatch</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Delhivery Express Shipping Card */}
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <Truck className="w-4 h-4 text-sky-600" />
+                      <span>Doorstep Delivery Method</span>
+                    </label>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Dispatched from: Ambawadi, Ahmedabad (380015)
+                    </span>
+                  </div>
+
+                  {/* Free Delivery Banner Card */}
+                  <div className="p-4 sm:p-5 rounded-2xl border-2 border-emerald-500 bg-emerald-50/40 shadow-xs relative">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                          <Truck className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-bold text-slate-900 text-sm">Pan-India Insured Courier Delivery</h4>
+                            <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300/80 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              FREE DELIVERY
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-600 mt-0.5">
+                            Shipped via Delhivery / BlueDart in heavy-duty moisture-resistant protective roll tubes.
+                          </p>
+                        </div>
+                      </div>
+                      <span className="font-extrabold text-sm sm:text-base text-emerald-700 font-mono shrink-0">
+                        FREE
+                      </span>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-emerald-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+                      <span className="flex items-center gap-1.5 text-slate-700 font-medium">
+                        <Calendar className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                        <span>
+                          Estimated Delivery: <strong>{estimatedDelivery?.dateRange ? `${estimatedDelivery.dateRange} (${estimatedDelivery.days || '3 – 5 Days'})` : (estimatedDelivery?.days || '3 – 5 Days')}</strong>
+                        </span>
+                      </span>
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white text-emerald-800 border border-emerald-200 self-start sm:self-auto">
+                        {pincode && pincode.length === 6 ? '✓ Serviceable Location' : '✓ 100% Free Doorstep Delivery'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {delhiveryLoading && (
+                    <p className="text-[11px] text-sky-700 flex items-center gap-1.5 animate-pulse">
+                      <span className="w-3 h-3 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+                      <span>Checking PIN code serviceability from Ahmedabad facility...</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Refund & Custom Sizing Notice */}
@@ -657,10 +802,33 @@ export default function CheckoutPage() {
                     <span>Items Subtotal</span>
                     <span className="font-semibold text-slate-900">₹{subtotal.toLocaleString('en-IN')}</span>
                   </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Delivery Charge</span>
-                    <span className="font-semibold text-slate-900">₹{deliveryCharge}</span>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span className="flex items-center gap-1">
+                      <span>Pan-India Delivery</span>
+                      {shippingZone && (
+                        <span className="text-[10px] bg-sky-100 text-sky-800 font-bold px-1.5 py-0.5 rounded">
+                          Zone {shippingZone}
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full text-[10px]">
+                      FREE
+                    </span>
                   </div>
+
+                  {/* Estimated Delivery Time Summary Row */}
+                  {estimatedDelivery && pincode && pincode.length === 6 && (
+                    <div className="flex justify-between items-center bg-sky-50/70 px-2.5 py-1.5 rounded-xl border border-sky-200/60 text-[11px]">
+                      <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                        <Calendar className="w-3.5 h-3.5 text-sky-600" />
+                        <span>Est. Delivery:</span>
+                      </span>
+                      <span className="font-bold text-sky-950 font-sans">
+                        {estimatedDelivery.dateRange || estimatedDelivery.days}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between text-slate-600">
                     <span>GST & Packaging</span>
                     <span className="text-slate-500 font-medium">Included</span>
@@ -671,7 +839,9 @@ export default function CheckoutPage() {
                 <div className="pt-3 border-t border-slate-100 flex justify-between items-end">
                   <div>
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Total Payable</span>
-                    <span className="text-[11px] text-slate-500 font-medium">Incl. all taxes & delivery</span>
+                    <span className="text-[11px] text-emerald-600 font-medium">
+                      Free Doorstep Delivery • Incl. all taxes
+                    </span>
                   </div>
                   <span className="font-serif font-extrabold text-2xl text-slate-900">
                     ₹{totalPayable.toLocaleString('en-IN')}
@@ -681,8 +851,8 @@ export default function CheckoutPage() {
                 {/* Submit Action Button */}
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 rounded-2xl shadow-md shadow-sky-500/25 transition flex items-center justify-center gap-2 group text-base cursor-pointer active:scale-[0.99]"
+                  disabled={loading || delhiveryLoading}
+                  className="w-full bg-sky-500 hover:bg-sky-600 shadow-md shadow-sky-500/25 text-white font-bold py-4 rounded-2xl transition flex items-center justify-center gap-2 group text-base cursor-pointer active:scale-[0.99]"
                 >
                   <Lock className="w-5 h-5" />
                   <span>
@@ -697,8 +867,12 @@ export default function CheckoutPage() {
                 {/* Trust Badges */}
                 <div className="bg-sky-50/60 border border-sky-200/60 rounded-2xl p-3.5 space-y-2 text-[11px] text-slate-600">
                   <div className="flex items-center gap-2 text-sky-900 font-bold">
+                    <Truck className="w-4 h-4 text-sky-600 shrink-0" />
+                    <span>Insured Express Courier Packaging</span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-sky-600 shrink-0" />
-                    <span>Cashfree 100% Encrypted & Safe Gateway</span>
+                    <span>Cashfree 100% Encrypted & Safe Gateway (UPI / Cards / NetBanking)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Award className="w-4 h-4 text-sky-700 shrink-0" />

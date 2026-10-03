@@ -3,9 +3,9 @@ export const PAPER_OPTIONS = [
     id: 'non-woven-wallpaper',
     name: 'Non Woven Wallpaper',
     width: '59"',
-    regularPrice: 40,
-    embossedPrice: 72,
-    pricePerSqFt: 40,
+    regularPrice: 120,
+    embossedPrice: 216,
+    pricePerSqFt: 120,
     hasEmbossed: true,
     isPopular: true,
     tag: 'Popular Choice',
@@ -15,9 +15,9 @@ export const PAPER_OPTIONS = [
     id: 'hd-pvc-paper',
     name: 'HD PVC Paper',
     width: '59"',
-    regularPrice: 40,
-    embossedPrice: 72,
-    pricePerSqFt: 40,
+    regularPrice: 120,
+    embossedPrice: 216,
+    pricePerSqFt: 120,
     hasEmbossed: true,
     isPopular: false,
     tag: 'High Definition',
@@ -27,9 +27,9 @@ export const PAPER_OPTIONS = [
     id: 'non-tearable-feather',
     name: 'Non Tearable Paper (Feather)',
     width: '50"',
-    regularPrice: 56,
-    embossedPrice: 88,
-    pricePerSqFt: 56,
+    regularPrice: 168,
+    embossedPrice: 264,
+    pricePerSqFt: 168,
     hasEmbossed: true,
     isPopular: false,
     tag: 'Tear-Proof Feather',
@@ -39,9 +39,9 @@ export const PAPER_OPTIONS = [
     id: 'texture-canvas-paper',
     name: 'Texture Canvas Paper',
     width: '49"',
-    regularPrice: 96,
-    embossedPrice: 128,
-    pricePerSqFt: 96,
+    regularPrice: 288,
+    embossedPrice: 384,
+    pricePerSqFt: 288,
     hasEmbossed: true,
     isPopular: true,
     tag: 'Fine Art Texture',
@@ -51,9 +51,9 @@ export const PAPER_OPTIONS = [
     id: 'sandstone-texture-paper',
     name: 'Sandstone Texture Paper',
     width: '49"',
-    regularPrice: 96,
-    embossedPrice: 128,
-    pricePerSqFt: 96,
+    regularPrice: 288,
+    embossedPrice: 384,
+    pricePerSqFt: 288,
     hasEmbossed: true,
     isPopular: false,
     tag: 'Granular Stone Finish',
@@ -63,9 +63,9 @@ export const PAPER_OPTIONS = [
     id: 'texture-canvas-fabric-back',
     name: 'Texture Canvas Fabric Back',
     width: '54"',
-    regularPrice: 96,
-    embossedPrice: 128,
-    pricePerSqFt: 96,
+    regularPrice: 288,
+    embossedPrice: 384,
+    pricePerSqFt: 288,
     hasEmbossed: true,
     isPopular: false,
     tag: 'Reinforced Fabric',
@@ -75,9 +75,9 @@ export const PAPER_OPTIONS = [
     id: 'pure-canvas-fabric-jointless',
     name: 'Pure Canvas Fabric Jointless',
     width: '122"',
-    regularPrice: 96,
-    embossedPrice: 128,
-    pricePerSqFt: 96,
+    regularPrice: 288,
+    embossedPrice: 384,
+    pricePerSqFt: 288,
     hasEmbossed: true,
     isPopular: true,
     tag: 'Jointless 122" Roll',
@@ -87,9 +87,9 @@ export const PAPER_OPTIONS = [
     id: 'texture-self-adhesive-vinyl',
     name: 'Texture Self Adhesive Vinyl',
     width: '53"',
-    regularPrice: 96,
-    embossedPrice: 128,
-    pricePerSqFt: 96,
+    regularPrice: 288,
+    embossedPrice: 384,
+    pricePerSqFt: 288,
     hasEmbossed: true,
     isPopular: false,
     tag: 'Peel & Stick Textured',
@@ -99,9 +99,9 @@ export const PAPER_OPTIONS = [
     id: 'self-adhesive-vinyl',
     name: 'Self Adhesive Vinyl',
     width: '59"',
-    regularPrice: 40,
-    embossedPrice: 72,
-    pricePerSqFt: 40,
+    regularPrice: 120,
+    embossedPrice: 216,
+    pricePerSqFt: 120,
     hasEmbossed: true,
     isPopular: false,
     tag: 'Peel & Stick DIY',
@@ -111,9 +111,9 @@ export const PAPER_OPTIONS = [
     id: 'one-way-vision-vinyl',
     name: 'One Way Vision Vinyl',
     width: '59"',
-    regularPrice: 48,
+    regularPrice: 144,
     embossedPrice: null,
-    pricePerSqFt: 48,
+    pricePerSqFt: 144,
     hasEmbossed: false,
     isPopular: false,
     tag: 'Perforated Vinyl',
@@ -123,9 +123,9 @@ export const PAPER_OPTIONS = [
     id: 'gold-foil-on-non-woven',
     name: 'Gold Foil on Non Woven',
     width: '59"',
-    regularPrice: 88,
+    regularPrice: 264,
     embossedPrice: null,
-    pricePerSqFt: 88,
+    pricePerSqFt: 264,
     hasEmbossed: false,
     isPopular: true,
     tag: 'Luxury Metallic Foil',
@@ -267,6 +267,58 @@ export function getRoomFromSlug(slug) {
   if (clean.includes('temple')) return 'Temple Room';
   return 'all';
 }
+
+export function findWallpaper(searchId, customCatalog = null) {
+  if (!searchId) return null;
+  const catalog = (Array.isArray(customCatalog) && customCatalog.length > 0) ? customCatalog : INITIAL_WALLPAPERS;
+  
+  let decoded = String(searchId).trim();
+  try {
+    decoded = decodeURIComponent(decoded);
+  } catch (e) {}
+
+  // 1. Direct ID / Code match
+  const exact = catalog.find(p => 
+    p && (
+      (p.id && p.id.toLowerCase() === decoded.toLowerCase()) || 
+      (p.code && p.code.toLowerCase() === decoded.toLowerCase())
+    )
+  );
+  if (exact) return exact;
+
+  // 2. Normalized matching (ignoring hyphens, spaces, underscores, case)
+  const cleanSearch = decoded.toLowerCase().replace(/[\s\-_]+/g, '');
+  const cleanSearchNoLeadingZero = cleanSearch.replace(/0+(\d+)/, '$1');
+
+  const normalized = catalog.find(p => {
+    if (!p) return false;
+    const cleanId = p.id ? p.id.toLowerCase().replace(/[\s\-_]+/g, '') : '';
+    const cleanCode = p.code ? p.code.toLowerCase().replace(/[\s\-_]+/g, '') : '';
+    const cleanCodeNoLeadingZero = cleanCode.replace(/0+(\d+)/, '$1');
+    const cleanIdNoLeadingZero = cleanId.replace(/0+(\d+)/, '$1');
+
+    return (
+      cleanId === cleanSearch ||
+      cleanCode === cleanSearch ||
+      cleanIdNoLeadingZero === cleanSearchNoLeadingZero ||
+      cleanCodeNoLeadingZero === cleanSearchNoLeadingZero ||
+      cleanId === cleanSearchNoLeadingZero ||
+      cleanCode === cleanSearchNoLeadingZero
+    );
+  });
+
+  if (normalized) return normalized;
+
+  // 3. Fallback: Check if title or ID starts with or contains the key words
+  const fuzzy = catalog.find(p => {
+    if (!p) return false;
+    const cleanTitle = (p.title || '').toLowerCase().replace(/[\s\-_]+/g, '');
+    return cleanTitle.includes(cleanSearch) || (cleanSearch.length > 4 && cleanSearch.includes(p.id?.toLowerCase().replace(/[\s\-_]+/g, '')));
+  });
+
+  return fuzzy || null;
+}
+
 
 export const INITIAL_WALLPAPERS = [
   {
